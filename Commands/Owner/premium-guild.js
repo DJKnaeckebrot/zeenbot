@@ -42,6 +42,8 @@ module.exports = {
      */
     async execute(interaction, client) {
 
+        if (user.id !== "424868316398747648") return EditReply(interaction, "❌", `This command is classified!`)
+
         await interaction.deferReply({ ephemeral: true })
 
         const { options, guild } = interaction
