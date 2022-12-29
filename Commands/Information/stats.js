@@ -14,16 +14,16 @@ function rState(val) {
     var status = " ";
     switch (val) {
         case 0:
-            status = `\`🔴\` Disconnected`;
+            status = `\`:red_circle:\` Disconnected`;
             break;
         case 1:
-            status = `\`🟢\` Connected`;
+            status = `\`:green_circle:\` Connected`;
             break;
         case 2:
-            status = `\`🟡\` Connecting`;
+            status = `\`:yellow_circle:\` Connecting`;
             break;
         case 3:
-            status = `\`🟣\` Disconnecting`;
+            status = `\`:purple_circle:\` Disconnecting`;
             break;
     }
     return status;
@@ -50,9 +50,9 @@ module.exports = {
         let apiLatency = client.ws.ping;
 
         let emLatency = {
-            Green: "🟢",
-            Yellow: "🟡",
-            Red: "🔴",
+            Green: ":green_circle:",
+            Yellow: ":yellow_circle:",
+            Red: ":red_circle:",
         };
 
         const stats = new EmbedBuilder()
@@ -60,12 +60,11 @@ module.exports = {
             .setTitle("GENERAL INFO")
             .setDescription(
                 [
-                    `**🪧 Name :** ${client.user.username} | ${client.user}`,
-                    `**🏷️ Tag :** ${client.user.tag}`,
-                    `\**⚙️ Version :** ${pkg.version}`,
-                    `**👑 Owner :** <insert name here>`,
-                    `**🌐 Website :** <isert site here>`,
-                    `**\`\`\`\nMore updates coming soon.(remove this if you want)\n\`\`\`**`,
+                    `:wave: ** Name :** ${client.user.username} | ${client.user}`,
+                    `:placard: ** Tag :** ${client.user.tag}`,
+                    `:baby: ** Version :** ${pkg.version}`,
+                    `:crown: ** Owner :** DJKnaeckebrot#0001`,
+                    `:globe_with_meridians: ** Website :** https://zeenbot.de`,
                 ].join("\n")
             )
             .setThumbnail(client.user.avatarURL({ dynamic: true, size: 4096 }))
@@ -73,23 +72,23 @@ module.exports = {
                 {
                     name: "BOT INFO",
                     value: [
-                        `**❕ Status** :  [\`🟢\`] Online`,
-                        `**🏓 Ping** : ${client.ws.ping}ms`,
-                        `**⏱️ Uptime** :\n\`\`\`\n${days}Days, ${hours}Hours, ${minutes}Minutes, ${seconds}Seconds\n\`\`\``,
+                        `:grey_exclamation: ** Status** :  :green_circle: Online`,
+                        `:ping_pong: ** Ping** : ${client.ws.ping}ms`,
+                        `:alarm_clock: ** Uptime** :\n\`\`\`\n${days}Days, ${hours}Hours, ${minutes}Minutes, ${seconds}Seconds\n\`\`\``,
                     ].join("\n"),
                 },
                 {
                     name: "DataBase INFO",
                     value: [
-                        `**🪧 Name :** MongoDB`,
-                        `**❕ Status :** ${rState(connection.readyState)}`,
+                        `:placard: ** Name :** MongoDB`,
+                        `:grey_exclamation: ** Status :** ${rState(connection.readyState)}`,
                     ].join("\n"),
                 },
                 {
                     name: "HOST & LIBRARY INFO",
                     value: [
-                        `**🪧 Name :** None`,
-                        `📚 **Library :** discord.js | V•${version}`,
+                        `:placard: ** Name :** None`,
+                        `:books: **Library :** discord.js | V ${version}`,
                     ].join("\n"),
                 },
             );
