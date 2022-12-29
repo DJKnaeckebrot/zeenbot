@@ -5,6 +5,7 @@ const PermissionsDB = require("../../Structures/Schemas/Permissions")
 const WelcomeDB = require("../../Structures/Schemas/Welcome")
 const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
 const LogsSwitchDB = require("../../Structures/Schemas/GeneralLogs")
+const ChannelDB = require("../../Structures/Schemas/LevelUpChannel")
 
 module.exports = {
     name: "ready",
@@ -72,6 +73,27 @@ module.exports = {
                     preloader: "Loading..."
                 },
 
+                guilds: {
+                    cardTitle: "Guilds",
+                    cardDescription: "Here are all the guilds you currently have permissions for:",
+                    type: "blurlist"
+                },
+
+                guildInfo: {
+                    cardTitle: "Server Information",
+                    cardDescription: "An overview about your server",
+                },
+
+                popupMsg: {
+                    savedSettings: "Saved settings",
+                    noPerms: "Error",
+                },
+
+                guildSettings: {
+                    cardTitle: "Guilds",
+                    cardDescription: "Here you can manage all the settings for your guild:",
+                },
+
                 index: {
                     card: {
                         category: "zeenbot's Panel - The center of everything",
@@ -115,6 +137,7 @@ module.exports = {
             }),
             settings: [
 
+                // Permissions
                 {
                     categoryId: "permissions",
                     categoryName: "Permissions",
@@ -763,6 +786,51 @@ module.exports = {
 
                             }
                         },
+                    ]
+                },
+
+                // Level
+                {
+                    categoryId: "level",
+                    categoryName: "Levels",
+                    categoryDescription: "Setup the level system for the bot",
+                    categoryOptionsList: [
+                        {
+                            optionId: "levelchannel",
+                            optionName: "Level Up Channel",
+                            optionDescription: "Set the channel for the level up notifications",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await ChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Channel
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await ChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new ChannelDB({
+                                        Guild: guild.id,
+                                        Channel: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Channel = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        }
                     ]
                 },
 
