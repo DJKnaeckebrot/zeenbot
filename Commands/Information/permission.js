@@ -1,8 +1,9 @@
 const { Client, ChatInputCommandInteraction, ApplicationCommandOptionType, EmbedBuilder, PermissionFlagsBits } = require("discord.js")
 module.exports = {
     name: "permissions",
-    description: "Displays the permissions of a member",
+    description: "(Premium) Displays the permissions of a member",
     category: "Information",
+    premium: true,
     options: [
         {
             name: "user",
