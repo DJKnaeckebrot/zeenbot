@@ -13,11 +13,14 @@ module.exports = {
         const { user, guild } = member
 
         const Data = await DB.findOne({ Guild: guild.id }).catch(err => { })
+
         if (!Data) return
 
         const Message = `Hey ${user}, welcome to **${guild.name}**`
 
         let dmMsg
+
+        let Msg = Data.Msg || " ";
 
         if (Data.DMMessage !== null) {
 
@@ -33,10 +36,16 @@ module.exports = {
             const Channel = guild.channels.cache.get(Data.Channel)
             if (!Channel) return
 
+            console.log(Data.Msg)
+
             const Embed = new EmbedBuilder()
                 .setColor(client.color)
                 .setAuthor({ name: user.tag, iconURL: user.displayAvatarURL() })
-                .setDescription(`Welcome ${member} to the server!\n\nAccount Created: <t:${parseInt(user.createdTimestamp / 1000)}:R>\nMember Count: \`${guild.memberCount}\``)
+                .addFields(
+                    { name: "Account Created", value: `<t:${parseInt(user.createdTimestamp / 1000)}:R>`, inline: true },
+                    { name: "Member Count", value: `${guild.memberCount}`, inline: true },
+                )
+                .setDescription(Data.Msg)
                 .setThumbnail(user.displayAvatarURL())
                 .setFooter({ text: "Welcome by zeenbot" })
                 .setTimestamp()
