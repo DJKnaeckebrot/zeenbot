@@ -8,6 +8,8 @@ const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
 const LogsSwitchDB = require("../../Structures/Schemas/GeneralLogs")
 const ChannelDB = require("../../Structures/Schemas/LevelUpChannel")
 const voiceDB = require("../../Structures/Schemas/VoiceSystem")
+const TicketDB = require("../../Structures/Schemas/Ticket")
+const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
 
 module.exports = {
     name: "ready",
@@ -23,13 +25,19 @@ module.exports = {
         let Moderation = []
         let Economy = []
         let Community = []
+        let Tickets = []
+        let Giveaway = []
 
         const info = client.commands.filter(x => x.category === "Information")
         const mod = client.commands.filter(x => x.category === "Moderation")
         const eco = client.commands.filter(x => x.category === "Economy")
         const com = client.commands.filter(x => x.category === "Community")
+        const tick = client.commands.filter(x => x.category === "Tickets")
+        const give = client.commands.filter(x => x.category === "Giveaway")
 
         CommandPush(info, Information)
+        CommandPush(tick, Tickets)
+        CommandPush(give, Giveaway)
         CommandPush(mod, Moderation)
         CommandPush(eco, Economy)
         CommandPush(com, Community)
@@ -44,7 +52,7 @@ module.exports = {
             redirectUri: `${config.dbd.domain}${config.dbd.redirectUri}`,
             domain: config.dbd.domain,
             ownerIDs: config.dbd.ownerIDs,
-            useThemeMaintenance: true,
+            useThemeMaintenance: false,
             useTheme404: true,
             acceptPrivacyPolicy: true,
             bot: client,
@@ -281,8 +289,8 @@ module.exports = {
                     },
                 },
                 websiteName: "zeenbot",
-                colorScheme: "yellow",
-                supporteMail: "support@szeenbot.de",
+                colorScheme: "blue",
+                supporteMail: "support@zeenbot.de",
                 icons: {
                     favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
                     noGuildIcon: "https://cdn.discordapp.com/attachments/1041329286969294858/1058321546197868625/abstract-black-low-poly-wallpaper-preview.jpeg",
@@ -362,6 +370,18 @@ module.exports = {
                         subTitle: "Information Commands",
                         aliasesDisabled: false,
                         list: Information
+                    },
+                    {
+                        category: "Tickets",
+                        subTitle: "Ticket Commands",
+                        aliasesDisabled: false,
+                        list: Tickets
+                    },
+                    {
+                        category: "Giveaways",
+                        subTitle: "Giveaway Commands",
+                        aliasesDisabled: false,
+                        list: Giveaway
                     },
                     {
                         category: "Economy",
@@ -461,6 +481,7 @@ module.exports = {
                                     data = new WelcomeDB({
                                         Guild: guild.id,
                                         Channel: newData,
+                                        Msg: null,
                                         DM: false,
                                         DMMessage: null,
                                         Content: false,
@@ -472,6 +493,48 @@ module.exports = {
                                 } else {
 
                                     data.Channel = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "welmsg",
+                            optionName: "Welcome Message",
+                            optionDescription: "Set the welcome messsage",
+                            optionType: DBD.formTypes.input("Welcome to my server!", 1, 256, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await WelcomeDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Msg
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await WelcomeDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new WelcomeDB({
+                                        Guild: guild.id,
+                                        Channel: null,
+                                        Msg: newData,
+                                        DM: false,
+                                        DMMessage: null,
+                                        Content: false,
+                                        Embed: false
+
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Msg = newData
                                     await data.save()
 
                                 }
@@ -501,6 +564,7 @@ module.exports = {
                                     data = new WelcomeDB({
                                         Guild: guild.id,
                                         Channel: null,
+                                        Msg: null,
                                         DM: newData,
                                         DMMessage: null,
                                         Content: false,
@@ -546,6 +610,7 @@ module.exports = {
                                     data = new WelcomeDB({
                                         Guild: guild.id,
                                         Channel: null,
+                                        Msg: null,
                                         DM: false,
                                         DMMessage: null,
                                         Content: newData,
@@ -591,6 +656,7 @@ module.exports = {
                                     data = new WelcomeDB({
                                         Guild: guild.id,
                                         Channel: null,
+                                        Msg: null,
                                         DM: false,
                                         DMMessage: null,
                                         Content: false,
@@ -640,6 +706,7 @@ module.exports = {
                                     data = new WelcomeDB({
                                         Guild: guild.id,
                                         Channel: null,
+                                        Msg: null,
                                         DM: false,
                                         DMMessage: newData,
                                         Content: false,
@@ -691,10 +758,7 @@ module.exports = {
                                     data = new GeneralLogsDB({
                                         Guild: guild.id,
                                         Channel: newData,
-                                        DM: false,
-                                        DMMessage: null,
-                                        Content: false,
-                                        Embed: false
+                                        IgnoreChannels: null
                                     })
 
                                     await data.save()
@@ -730,7 +794,8 @@ module.exports = {
 
                                     data = new GeneralLogsDB({
                                         Guild: guild.id,
-                                        IgnoreChannels: newData,
+                                        Channel: null,
+                                        IgnoreChannels: newData
                                     })
 
                                     await data.save()
@@ -1128,7 +1193,7 @@ module.exports = {
                     categoryId: "voicehubs",
                     categoryName: "Voice Hubs",
                     categoryDescription: "Setup the voice Hub for the server",
-                    categoryImageURL: 'https://static.thenounproject.com/png/1912211-200.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955138413990028/voice.png',
                     categoryOptionsList: [
                         {
                             optionId: "hub",
@@ -1169,6 +1234,268 @@ module.exports = {
                     ]
                 },
 
+                // Tickets System
+                {
+                    categoryId: "tickets",
+                    categoryName: "Tickets",
+                    categoryDescription: "Setup the Tickets for the server",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955137977786428/tickets.png',
+                    categoryOptionsList: [
+                        {
+                            optionId: "panel",
+                            optionName: "Panel Channel",
+                            optionDescription: "Set the channel for the panel hub",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Channel
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Channel: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Channel = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "category",
+                            optionName: "Panel category",
+                            optionDescription: "Set the channel category for the tickets",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildCategory]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Category
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Category: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Category = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "transscript",
+                            optionName: "Transcript Channel",
+                            optionDescription: "Set the transcript channel for the tickets",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Transcripts
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Transcripts: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Transcripts = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "handlers",
+                            optionName: "Ticket Support Role",
+                            optionDescription: "Set the Ticket support role for the tickets",
+                            optionType: DBD.formTypes.rolesSelect(false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Handlers
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Handlers: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Handlers = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "everyone",
+                            optionName: "Everyone Role",
+                            optionDescription: "Set the everyone role for the tickets",
+                            optionType: DBD.formTypes.input("ROLE ID", 18, 20, false, true),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Everyone
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Everyone: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Everyone = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "description",
+                            optionName: "Description",
+                            optionDescription: "Set the text to be shown in your Ticket",
+                            optionType: DBD.formTypes.input("Click one of the buttons below to open a ticket", 1, 512, false, true),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Description
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Description: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Description = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "buttons",
+                            optionName: "Buttons",
+                            optionDescription: "Set the text to be shown the buttons",
+                            optionType: DBD.formTypes.input("[ \"Click me\", \"Mee too!\", \"Well me too!\", \"I dont wanna be missed!\" ]", 1, 512, false, true),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Buttons
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Buttons: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Description = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        }
+                    ]
+                },
+
             ]
 
         })
@@ -1184,7 +1511,7 @@ function CommandPush(filteredArray, CategoryArray) {
 
         let cmdObject = {
             commandName: obj.name,
-            commandUsage: "/" + obj.name,
+            commandUsage: obj.usage,
             commandDescription: obj.description,
             commandAlias: "None"
         }
