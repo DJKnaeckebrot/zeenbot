@@ -4,6 +4,8 @@ const ticketSchema = require("../../Structures/Schemas/Ticket");
 module.exports = {
     name: "ticket",
     description: "(Premium) Ticket actions",
+    usage: "/ticket :add/remove :user\"USER\"",
+    parameter: "action , user",
     category: "Tickets",
     premium: true,
     UserPerms: ["ManageChannels"],

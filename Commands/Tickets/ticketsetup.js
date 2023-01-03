@@ -5,6 +5,8 @@ module.exports = {
     name: "ticketsetup",
     description: "(Premium) Create a ticket message.",
     category: "Tickets",
+    usage: "/ticketsetup :add/remove :user\"USER\"",
+    parameter: "action , user",
     premium: true,
     UserPerms: ["ManageChannels"],
     BotPerms: ["ManageChannels"],
