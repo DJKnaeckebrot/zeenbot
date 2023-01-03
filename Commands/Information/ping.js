@@ -3,7 +3,7 @@ const Reply = require("../../Systems/Reply")
 
 module.exports = {
     name: "ping",
-    description: "Displays the ping",
+    description: "(Premium) Displays the ping",
     category: "Information",
     premium: true,
 
