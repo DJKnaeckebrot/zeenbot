@@ -1,11 +1,13 @@
 const { Client, ChannelType } = require("discord.js")
-const DarkDashboard = require("dbd-dark-dashboard")
-const DBD = require("discord-dashboard")
+const config = require('./config.json');
+const SoftUI = require('dbd-soft-ui');
+let DBD = require('discord-dashboard');
 const PermissionsDB = require("../../Structures/Schemas/Permissions")
 const WelcomeDB = require("../../Structures/Schemas/Welcome")
 const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
 const LogsSwitchDB = require("../../Structures/Schemas/GeneralLogs")
 const ChannelDB = require("../../Structures/Schemas/LevelUpChannel")
+const voiceDB = require("../../Structures/Schemas/VoiceSystem")
 
 module.exports = {
     name: "ready",
@@ -19,104 +21,339 @@ module.exports = {
 
         let Information = []
         let Moderation = []
+        let Economy = []
+        let Community = []
 
         const info = client.commands.filter(x => x.category === "Information")
         const mod = client.commands.filter(x => x.category === "Moderation")
+        const eco = client.commands.filter(x => x.category === "Economy")
+        const com = client.commands.filter(x => x.category === "Community")
 
         CommandPush(info, Information)
         CommandPush(mod, Moderation)
+        CommandPush(eco, Economy)
+        CommandPush(com, Community)
 
-        await DBD.useLicense(process.env.DBD)
+        await DBD.useLicense(config.dbd.license)
         DBD.Dashboard = DBD.UpdatedClass()
 
         const Dashboard = new DBD.Dashboard({
 
-            port: 8000,
-            client: {
-                id: process.env.CLIENT_ID,
-                secret: process.env.CLIENT_SECRET
-            },
-            redirectUri: "http://localhost:8000/discord/callback",
-            domain: "http://localhost",
-            bot: client,
-            supportServer: {
-                slash: "/support",
-                inviteUrl: "https://discord.com/invite/ejcRrgB3eF"
-            },
+            port: config.dbd.port,
+            client: config.discord.client,
+            redirectUri: `${config.dbd.domain}${config.dbd.redirectUri}`,
+            domain: config.dbd.domain,
+            ownerIDs: config.dbd.ownerIDs,
+            useThemeMaintenance: true,
+            useTheme404: true,
             acceptPrivacyPolicy: true,
-            minimizedConsoleLogs: true,
+            bot: client,
             guildAfterAuthorization: {
                 use: true,
-                guildId: "1041329219210321980"
+                guildId: "1057986397081980948"
             },
-            invite: {
-                clientId: client.user.id,
-                scopes: ["bot", "applications.commands", "guilds", "identify"],
-                permissions: "8",
-                redirectUri: "http://localhost:8000"
-            },
-            theme: DarkDashboard({
-
-                information: {
-                    createdBy: "DJKnaeckebrot",
-                    websiteTitle: "zeenbot",
-                    websiteName: "zeenbot Dashboard",
-                    websiteUrl: "https:/www.zeenbot.de/",
-                    dashboardUrl: "http://localhost:8000/",
-                    supporteMail: "support@zeenbot.de",
-                    supportServer: "https://discord.gg/ejcRrgB3eF",
-                    imageFavicon: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
-                    iconURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
-                    loggedIn: "Successfully signed in.",
-                    mainColor: "#2CA8FF",
-                    subColor: "#ebdbdb",
-                    preloader: "Loading..."
-                },
-
-                guilds: {
-                    cardTitle: "Guilds",
-                    cardDescription: "Here are all the guilds you currently have permissions for:",
-                    type: "blurlist"
-                },
-
-                guildInfo: {
-                    cardTitle: "Server Information",
-                    cardDescription: "An overview about your server",
-                },
-
-                popupMsg: {
-                    savedSettings: "Saved settings",
-                    noPerms: "Error",
-                },
-
-                guildSettings: {
-                    cardTitle: "Guilds",
-                    cardDescription: "Here you can manage all the settings for your guild:",
-                },
-
-                index: {
-                    card: {
-                        category: "zeenbot's Panel - The center of everything",
-                        title: `Welcome to the zeenbot panel where you can control the core features to the bot.`,
-                        image: "https://i.imgur.com/axnP93g.png",
-                    },
-
-                    information: {
-                        category: "Invite",
-                        title: "Invite the bot",
-                        description: `https://discord.gg/ejcRrgB3eF`,
-                        link: {
-                            text: "Invite the bot",
-                            enabled: true,
-                            url: "https://discord.gg/ejcRrgB3eF"
+            theme: SoftUI({
+                locales: {
+                    enUS: {
+                        name: 'English',
+                        index: {
+                            feeds: ["Current Users", "CPU", "System Platform", "Server Count"],
+                            card: {
+                                category: "zeenbot",
+                                title: "zeenbot's new Panel - The center of everything",
+                                description: "Welcome to the zeenbot panel where you can control the core features to the bot.",
+                                footer: "Invite the Bot",
+                                link: {
+                                    enabled: true,
+                                    url: "https://discord.com/api/oauth2/authorize?client_id=1047099666182967317&permissions=8&scope=bot%20applications.commands"
+                                }
+                            },
+                            feedsTitle: "Feeds",
+                            graphTitle: "Graphs",
+                        },
+                        blacklisted: {
+                            title: "Blacklisted",
+                            subtitle: "Access denied",
+                            description: "Unfortunately it seems that you have been blacklisted from the dashboard.",
+                            button: {
+                                enabled: false,
+                                text: "Return",
+                                link: "https://google.com"
+                            }
+                        },
+                        manage: {
+                            settings: {
+                                memberCount: "Members",
+                                info: {
+                                    info: "Info",
+                                    server: "Server Information"
+                                }
+                            }
+                        },
+                        privacyPolicy: {
+                            title: "Privacy Policy",
+                            description: "Privacy Policy and Terms of Service",
+                            pp: "Complete Privacy Policy",
+                        },
+                        partials: {
+                            sidebar: {
+                                dash: "Dashboard",
+                                manage: "Manage Guilds",
+                                commands: "Commands",
+                                pp: "Privacy Policy",
+                                admin: "Admin",
+                                account: "Account Pages",
+                                login: "Sign In",
+                                logout: "Sign Out"
+                            },
+                            navbar: {
+                                home: "Home",
+                                pages: {
+                                    manage: "Manage Guilds",
+                                    settings: "Manage Guilds",
+                                    commands: "Commands",
+                                    pp: "Privacy Policy",
+                                    admin: "Admin Panel",
+                                    error: "Error",
+                                    credits: "Credits",
+                                    debug: "Debug",
+                                    leaderboard: "Leaderboard",
+                                    profile: "Profile",
+                                    maintenance: "Under Maintenance",
+                                }
+                            },
+                            title: {
+                                pages: {
+                                    manage: "Manage Guilds",
+                                    settings: "Manage Guilds",
+                                    commands: "Commands",
+                                    pp: "Privacy Policy",
+                                    admin: "Admin Panel",
+                                    error: "Error",
+                                    credits: "Credits",
+                                    debug: "Debug",
+                                    leaderboard: "Leaderboard",
+                                    profile: "Profile",
+                                    maintenance: "Under Maintenance",
+                                }
+                            },
+                            preloader: {
+                                text: "Page is loading..."
+                            },
+                            premium: {
+                                title: "Want more from zeenbot?",
+                                description: "Check out premium features below!",
+                                buttonText: "Get Premium",
+                                button: {
+                                    url: "https://google.com"
+                                }
+                            },
+                            settings: {
+                                title: "Site Configuration",
+                                description: "Configurable Viewing Options",
+                                theme: {
+                                    title: "Site Theme",
+                                    description: "Make the site more appealing for your eyes!",
+                                },
+                                language: {
+                                    title: "Site Language",
+                                    description: "Select your preffered language!",
+                                }
+                            }
                         }
                     },
-
-                    feeds: {
-                        category: "Category",
-                        title: "Information",
-                        description: `This bot and panel is currently a work in progress so contact me if you find any issues on discord.`,
+                    deDE: {
+                        name: 'Deutsch',
+                        index: {
+                            feeds: ["Current Users", "CPU", "System Platform", "Server Count"],
+                            card: {
+                                category: "zeenbot",
+                                title: "zeenbot's neues Panel - The Zentrum von allem",
+                                description: "Herzlich willkommen im zeenbot-Panel, wo Sie die Kernfunktionen des Bots steuern können.",
+                                footer: "Lade den Bot ein",
+                                link: {
+                                    enabled: true,
+                                    url: "https://discord.com/api/oauth2/authorize?client_id=1047099666182967317&permissions=8&scope=bot%20applications.commands"
+                                }
+                            },
+                            feedsTitle: "Feeds",
+                            graphTitle: "Graphen",
+                        },
+                        blacklisted: {
+                            title: "Blacklisted",
+                            subtitle: "Zugriff verweigert",
+                            description: "Leider sieht es so aus, als wärst du für das Dashboard gesperrt.",
+                            button: {
+                                enabled: false,
+                                text: "Return",
+                                link: "https://google.com"
+                            }
+                        },
+                        manage: {
+                            settings: {
+                                memberCount: "Mitglieder",
+                                info: {
+                                    info: "Info",
+                                    server: "Server Informationen"
+                                }
+                            }
+                        },
+                        privacyPolicy: {
+                            title: "Datenschutzbestimmungen",
+                            description: "DDatenschutzbestimmungen und ABGs",
+                            pp: "Datenschutzbestimmungen",
+                        },
+                        partials: {
+                            sidebar: {
+                                dash: "Dashboard",
+                                manage: "Server verwalten",
+                                commands: "Commands",
+                                pp: "Datenschutzbestimmungen",
+                                admin: "Admin",
+                                account: "Account Seite",
+                                login: "Anmelden",
+                                logout: "Abmelden"
+                            },
+                            navbar: {
+                                home: "Home",
+                                pages: {
+                                    manage: "Server verwalten",
+                                    settings: "Server verwalten",
+                                    commands: "Commands",
+                                    pp: "Datenschutzbestimmungen",
+                                    admin: "Admin Panel",
+                                    error: "Error",
+                                    credits: "Credits",
+                                    debug: "Debug",
+                                    leaderboard: "Leaderboard",
+                                    profile: "Profil",
+                                    maintenance: "Wartungsarbeiten",
+                                }
+                            },
+                            title: {
+                                pages: {
+                                    manage: "Server verwalten",
+                                    settings: "Server verwalten",
+                                    commands: "Commands",
+                                    pp: "Datenschutzbestimmungen",
+                                    admin: "Admin Panel",
+                                    error: "Error",
+                                    credits: "Credits",
+                                    debug: "Debug",
+                                    leaderboard: "Leaderboard",
+                                    profile: "Profil",
+                                    maintenance: "Wartungsarbeiten",
+                                }
+                            },
+                            preloader: {
+                                text: "Seite lädt..."
+                            },
+                            premium: {
+                                title: "Du willst mehr von zeenbot?",
+                                description: "Sieht dir unsere Premium Features an!",
+                                buttonText: "Premium erhalten",
+                                button: {
+                                    url: "https://google.com"
+                                }
+                            },
+                            settings: {
+                                title: "Webseiten Konfiguration",
+                                description: "Verfügbare Einstellunge",
+                                theme: {
+                                    title: "Seiten Thema",
+                                    description: "Passe die Seite an!",
+                                },
+                                language: {
+                                    title: "Sprache",
+                                    description: "Wähle deine Sprache aus!",
+                                }
+                            }
+                        }
+                    }
+                },
+                customThemeOptions: {
+                    index: async ({ req, res, config }) => {
+                        return {
+                            values: [],
+                            graph: {},
+                            cards: [],
+                        }
                     },
+                },
+                websiteName: "zeenbot",
+                colorScheme: "yellow",
+                supporteMail: "support@szeenbot.de",
+                icons: {
+                    favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
+                    noGuildIcon: "https://cdn.discordapp.com/attachments/1041329286969294858/1058321546197868625/abstract-black-low-poly-wallpaper-preview.jpeg",
+                    sidebar: {
+                        darkUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png',
+                        lightUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
+                        hideName: true,
+                        borderRadius: false,
+                        alignCenter: true
+                    },
+                },
+                index: {
+                    card: {
+                        category: "zeenbot",
+                        title: "zeenbot's new Panel - The center of everything",
+                        description: "Welcome to the zeenbot panel where you can control the core features to the bot.",
+                        image: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
+                        footer: "Invite the Bot",
+                        link: {
+                            enabled: true,
+                            url: "https://discord.com/api/oauth2/authorize?client_id=1047099666182967317&permissions=8&scope=bot%20applications.commands"
+                        }
+                    },
+                    graph: {
+                        enabled: false,
+                        lineGraph: false,
+                        title: 'Memory Usage',
+                        tag: 'Memory (MB)',
+                        max: 100
+                    },
+                },
+                blacklisted: {
+                    title: "Blacklisted",
+                    subtitle: "Access denied",
+                    description: "Unfortunately it seems that you have been blacklisted from the dashboard.",
+                    button: {
+                        enabled: false,
+                        text: "Return",
+                        link: "https://google.com"
+                    }
+                },
+                sweetalert: {
+                    errors: {},
+                    success: {
+                        login: "Successfully logged in.",
+                    }
+                },
+                preloader: {
+                    image: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
+                    spinner: false,
+                    text: "Page is loading",
+                },
+                premium: {
+                    enabled: true,
+                    card: {
+                        title: "Want more from zeenbot?",
+                        description: "Check out premium features below!",
+                        bgImage: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
+                        button: {
+                            text: "Become Premium",
+                            url: "https://google.comgoogle.de"
+                        }
+                    }
+                },
+                admin: {
+                    pterodactyl: {
+                        enabled: false,
+                        apiKey: "apiKey",
+                        panelLink: "https://panel.website.com",
+                        serverUUIDs: []
+                    }
                 },
 
                 commands: [
@@ -125,6 +362,18 @@ module.exports = {
                         subTitle: "Information Commands",
                         aliasesDisabled: false,
                         list: Information
+                    },
+                    {
+                        category: "Economy",
+                        subTitle: "Economy Commands",
+                        aliasesDisabled: false,
+                        list: Economy
+                    },
+                    {
+                        category: "Community",
+                        subTitle: "Community Commands",
+                        aliasesDisabled: false,
+                        list: Community
                     },
                     {
                         category: "Moderation",
@@ -142,6 +391,7 @@ module.exports = {
                     categoryId: "permissions",
                     categoryName: "Permissions",
                     categoryDescription: "Setup the permissions for the bot",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429901000159293/permission.png',
                     categoryOptionsList: [
                         {
                             optionId: "mods",
@@ -188,6 +438,7 @@ module.exports = {
                     categoryId: "welcome",
                     categoryName: "Welcome System",
                     categoryDescription: "Setup the Welcome Channel",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429901549600768/welcome.png',
                     categoryOptionsList: [
                         {
                             optionId: "welch",
@@ -417,6 +668,7 @@ module.exports = {
                     categoryId: "logs",
                     categoryName: "Logging System",
                     categoryDescription: "Setup channels for General & Invite Logger",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429900584910948/log.png',
                     categoryOptionsList: [
                         {
                             optionId: "gench",
@@ -450,6 +702,42 @@ module.exports = {
                                 } else {
 
                                     data.Channel = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "ignch",
+                            optionName: "Ignored Categories",
+                            optionDescription: "Set or reset the categories to be ignored",
+                            optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildCategory]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await GeneralLogsDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.IgnoreChannels
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await GeneralLogsDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new GeneralLogsDB({
+                                        Guild: guild.id,
+                                        IgnoreChannels: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.IgnoreChannels = newData
                                     await data.save()
 
                                 }
@@ -794,6 +1082,7 @@ module.exports = {
                     categoryId: "level",
                     categoryName: "Levels",
                     categoryDescription: "Setup the level system for the bot",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429900173877358/level.png',
                     categoryOptionsList: [
                         {
                             optionId: "levelchannel",
@@ -823,6 +1112,52 @@ module.exports = {
                                 } else {
 
                                     data.Channel = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        }
+                    ]
+                },
+
+                // Voice Hubs
+                {
+                    categoryId: "voicehubs",
+                    categoryName: "Voice Hubs",
+                    categoryDescription: "Setup the voice Hub for the server",
+                    categoryImageURL: 'https://static.thenounproject.com/png/1912211-200.png',
+                    categoryOptionsList: [
+                        {
+                            optionId: "hub",
+                            optionName: "Hub",
+                            optionDescription: "Set the channel for the voice hub",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildVoice]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.ChannelID
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new voiceDB({
+                                        GuildID: guild.id,
+                                        ChannelID: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.ChannelID = newData
                                     await data.save()
 
                                 }
