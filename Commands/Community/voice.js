@@ -9,7 +9,6 @@ module.exports = {
     name: "voice",
     description: "Control your own channel",
     category: "Community",
-    premium: true,
     options: [
         {
             name: "invite",
@@ -41,6 +40,7 @@ module.exports = {
             name: "name",
             description: "Change the name of your channel.",
             type: 1,
+            premium: true,
             options: [
                 {
                     name: "text",
