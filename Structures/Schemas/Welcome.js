@@ -4,6 +4,7 @@ module.exports = model("welome", new Schema({
 
     Guild: String,
     Channel: String,
+    Msg: String,
     DM: Boolean,
     DMMessage: Object,
     Content: Boolean,
