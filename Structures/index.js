@@ -35,6 +35,7 @@ client.player = new Manager({
 client.on("raw", (d) => client.player.updateVoiceState(d))
 
 const Handlers = ["Events", "Commands", "EventStack", "Errors", "Player"]
+    client.voiceGenerator = new Collection();
 
 Handlers.forEach(handler => {
 
