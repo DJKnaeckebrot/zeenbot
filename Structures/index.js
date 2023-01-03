@@ -43,6 +43,12 @@ Handlers.forEach(handler => {
 
 })
 
+client.giveawayConfig = require("./config.js");
+
+['giveawaysEventsHandler', 'giveawaysManager'].forEach((x) => { // make sure it's in the right order
+    require(`../Utils/${x}`)(client);
+})
+
 module.exports = client
 
 client.login(process.env.TOKEN)
