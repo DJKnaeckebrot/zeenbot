@@ -10,6 +10,7 @@ const ChannelDB = require("../../Structures/Schemas/LevelUpChannel")
 const voiceDB = require("../../Structures/Schemas/VoiceSystem")
 const TicketDB = require("../../Structures/Schemas/Ticket")
 const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
+const antiLinkDB = require("../../Structures/Schemas/anitLink")
 
 module.exports = {
     name: "ready",
@@ -448,7 +449,81 @@ module.exports = {
                                 return
 
                             }
-                        }
+                        },
+                        {
+                            optionId: "anitlink",
+                            optionName: "Anitlink",
+                            optionDescription: "Enabled or Disable the Anti Link feature",
+                            optionType:  DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.logs
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new antiLinkDB({
+                                        Guild: guild.id,
+                                        logs: newData,
+                                        ignoredChannels: []
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.logs = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "alignch",
+                            optionName: "Anti Link ignored channels",
+                            optionDescription: "Set or reset the channels to be ignored",
+                            optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.ignoredChannels
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new antiLinkDB({
+                                        Guild: guild.id,
+                                        logs: false,
+                                        ignoredChannels: newData
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.ignoredChannels = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
                     ]
                 },
 
