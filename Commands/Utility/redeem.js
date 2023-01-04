@@ -1,4 +1,4 @@
-const { Client, ChatInputCommandInteraction } = require("discord.js")
+const { Client, ChatInputCommandInteraction, EmbedBuilder} = require("discord.js")
 const VoucherDB = require("../../Structures/Schemas/Voucher")
 const PremiumGuildDB = require("../../Structures/Schemas/PremiumGuild")
 const { generate } = require("voucher-code-generator")
@@ -25,7 +25,7 @@ module.exports = {
 
         await interaction.deferReply({ ephemeral: true })
 
-        const { guild, options } = interaction
+        const { guild, options, channel } = interaction
 
         const Voucher = options.getString("voucher")
 
@@ -52,6 +52,21 @@ module.exports = {
         await Data.save()
 
         EditReply(interaction, "✅", `${guild.name} is now a premium guild`)
+
+        const premiumEmbed = new EmbedBuilder()
+            .setTitle("Thank you!")
+            .setColor(client.color)
+            .setDescription(`Thank you for buying premium! \n You now have access to all the premium commands!`)
+            .setTimestamp()
+            .setFooter({ text: `zeenbot`, iconURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png" })
+            .addFields(
+                { name: "Premium Commands", value: "You now can use the following commands:"},
+                { name: "Ticket System", value: "You can use /ticketsetup to setup the ticket system!", inline: true },
+                { name: "Giveaways", value: "You can now use /giveaway to use the giveaway system!", inline: true }
+            )
+
+
+        channel.send({ embeds: [premiumEmbed] })
 
     }
 }
