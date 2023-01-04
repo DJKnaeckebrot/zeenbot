@@ -12,5 +12,6 @@ module.exports = model("generallogs", new Schema({
     EmojiStatus: Boolean,
     MemberBan: Boolean,
     MemberJoin: Boolean,
+    MemberLeave: Boolean,
 
 }))
