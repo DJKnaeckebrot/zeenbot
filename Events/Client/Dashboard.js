@@ -409,15 +409,15 @@ module.exports = {
 
                 // Permissions
                 {
-                    categoryId: "permissions",
-                    categoryName: "Permissions",
-                    categoryDescription: "Setup the permissions for the bot",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429901000159293/permission.png',
+                    categoryId: "general",
+                    categoryName: "General Settings",
+                    categoryDescription: "Setup the general settings for the bot",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
                     categoryOptionsList: [
                         {
                             optionId: "mods",
                             optionName: "Moderators",
-                            optionDescription: "Set the role for the mods",
+                            optionDescription: "Set the role for the mods/Admins",
                             optionType:  DBD.formTypes.rolesSelect(false),
                             getActualSet: async ({ guild }) => {
                                 let data = await PermissionsDB.findOne({ Guild: guild.id }).catch(err => { })
@@ -452,7 +452,7 @@ module.exports = {
                         },
                         {
                             optionId: "anitlink",
-                            optionName: "Anitlink",
+                            optionName: "Antilink",
                             optionDescription: "Enabled or Disable the Anti Link feature",
                             optionType:  DBD.formTypes.switch(false),
                             getActualSet: async ({ guild }) => {
@@ -471,7 +471,6 @@ module.exports = {
                                     data = new antiLinkDB({
                                         Guild: guild.id,
                                         logs: newData,
-                                        ignoredChannels: []
                                     })
 
                                     await data.save()
@@ -488,9 +487,9 @@ module.exports = {
                             }
                         },
                         {
-                            optionId: "alignch",
+                            optionId: "alnch",
                             optionName: "Anti Link ignored channels",
-                            optionDescription: "Set or reset the channels to be ignored",
+                            optionDescription: "Set or reset the categories to be ignored",
                             optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildText]),
                             getActualSet: async ({ guild }) => {
                                 let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
@@ -515,7 +514,43 @@ module.exports = {
 
                                 } else {
 
-                                    data.ignoredChannels = newData
+                                    data.ignoreChannels = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "anticrashch",
+                            optionName: "Anitcrash notification channel",
+                            optionDescription: "Set the channel for the anti crash handler",
+                            optionType:  DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await GeneralLogsDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.AntiCrashChannel
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await GeneralLogsDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new GeneralLogsDB({
+                                        Guild: guild.id,
+                                        AntiCrashChannel: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.AntiCrashChannel = newData
                                     await data.save()
 
                                 }
@@ -919,6 +954,47 @@ module.exports = {
                                 } else {
 
                                     data.MemberJoin = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "memleaved",
+                            optionName: "",
+                            optionDescription: "Member Left",
+                            optionType: DBD.formTypes.switch(false),
+                            themeOptions: {
+                                minimalbutton: {
+                                    first: true
+                                }
+                            },
+                            getActualSet: async ({ guild }) => {
+                                let data = await LogsSwitchDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.MemberLeave
+                                else return false
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await LogsSwitchDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = false
+
+                                if (!data) {
+
+                                    data = new LogsSwitchDB({
+                                        Guild: guild.id,
+                                        MemberLeave: newData
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.MemberLeave = newData
                                     await data.save()
 
                                 }
