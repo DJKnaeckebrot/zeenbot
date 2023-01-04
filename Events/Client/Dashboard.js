@@ -887,8 +887,49 @@ module.exports = {
                             }
                         },
                         {
-                            optionId: "memrole",
+                            optionId: "memjoin",
                             optionName: "Configure Logger System",
+                            optionDescription: "Member Joined",
+                            optionType: DBD.formTypes.switch(false),
+                            themeOptions: {
+                                minimalbutton: {
+                                    first: true
+                                }
+                            },
+                            getActualSet: async ({ guild }) => {
+                                let data = await LogsSwitchDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.MemberJoin
+                                else return false
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await LogsSwitchDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = false
+
+                                if (!data) {
+
+                                    data = new LogsSwitchDB({
+                                        Guild: guild.id,
+                                        MemberJoin: newData
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.MemberJoin = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "memrole",
+                            optionName: "",
                             optionDescription: "Member Role",
                             optionType: DBD.formTypes.switch(false),
                             themeOptions: {
@@ -1339,6 +1380,42 @@ module.exports = {
                                 } else {
 
                                     data.ChannelID = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "hublimit",
+                            optionName: "Hub User Limit",
+                            optionDescription: "Set the max user size for the voice hub",
+                            optionType: DBD.formTypes.input("3", 1, 2, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.MaxSize
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new voiceDB({
+                                        GuildID: guild.id,
+                                        MaxSize: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.MaxSize = newData
                                     await data.save()
 
                                 }
