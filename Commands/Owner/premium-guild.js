@@ -1,6 +1,7 @@
-const { Client, ChatInputCommandInteraction } = require("discord.js")
+const { Client, ChatInputCommandInteraction, EmbedBuilder} = require("discord.js")
 const DB = require("../../Structures/Schemas/PremiumGuild")
 const EditReply = require("../../Systems/EditReply")
+const welcomeSchema = require("../../Structures/Schemas/Welcome");
 
 module.exports = {
     name: "premium-guild",
@@ -67,6 +68,27 @@ module.exports = {
                 await Data.save()
 
                 EditReply(interaction, "✅", `${client.guilds.cache.get(Target).name} is now a premium guild`)
+
+                let welcomeData = await welcomeSchema.findOne({ Guild: Target }).catch(err => { })
+
+                if (welcomeData) {
+                    const channel = client.channels.cache.get(welcomeData.Channel)
+
+                    const premiumEmbed = new EmbedBuilder()
+                    .setTitle("Thank you!")
+                    .setColor(client.color)
+                    .setDescription(`Thank you for buying premium! \n You now have access to all the premium commands!`)
+                    .setTimestamp()
+                    .setFooter({ text: `zeenbot`, iconURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png" })
+                    .addFields(
+                        { name: "Premium Commands", value: "You now can use the following commands:"},
+                        { name: "Ticket System", value: "You can use /ticketsetup to setup the ticket system!", inline: true },
+                        { name: "Giveaways", value: "You can now use /giveaway to use the giveaway system!", inline: true }
+                    )
+
+
+                    channel.send({ embeds: [premiumEmbed] })
+                }
 
             }
                 break;
