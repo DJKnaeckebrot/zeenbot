@@ -23,7 +23,7 @@ module.exports = {
                 new EmbedBuilder()
                     .setColor(client.color)
                     .setAuthor({ name: user.username, iconURL: user.displayAvatarURL() })
-                    .setDescription(`Hey, you called me? I'm zeenbot! Nice to meet you. Type \`/\` & click on my logo to see all my commands!\n\n*This message will be deleted in \`10 seconds\`!*`)
+                    .setDescription(`Hey, you called me? I'm zeenbot! Nice to meet you. Type \`/\` & click on my logo to see all my commands!\n\n*This message will be deleted in \`30 seconds\`!*`)
                     .setThumbnail(user.displayAvatarURL())
                     .setFooter({ text: "Introduction to zeenbot" })
                     .setTimestamp()
@@ -34,12 +34,12 @@ module.exports = {
 
                     new ButtonBuilder()
                         .setStyle(ButtonStyle.Link)
-                        .setURL("https://thedrago.tk/invite")
+                        .setURL("https://discord.com/api/oauth2/authorize?client_id=1047099666182967317&permissions=8&scope=bot%20applications.commands")
                         .setLabel("Invite Me"),
 
                     new ButtonBuilder()
                         .setStyle(ButtonStyle.Link)
-                        .setURL("https://thedrago.tk/")
+                        .setURL("https://zeenbot.de")
                         .setLabel("Dashboard"),
 
                 )
@@ -55,7 +55,7 @@ module.exports = {
 
                 })
 
-            }, ms("10s"))
+            }, ms("30s"))
 
         })
 
