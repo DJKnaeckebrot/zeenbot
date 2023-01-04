@@ -1,4 +1,4 @@
-const { Client, Partials, Collection } = require("discord.js")
+const { Client, Partials, Collection, EmbedBuilder } = require("discord.js")
 const ms = require("ms")
 const { promisify } = require("util")
 const { glob } = require("glob")
@@ -8,6 +8,7 @@ require("dotenv").config()
 const { Channel, GuildMember, Message, Reaction, ThreadMember, User, GuildScheduledEvent } = Partials
 const nodes = require("../Systems/Nodes")
 const { Manager } = require("erela.js")
+const GeneralLogsDB = require("../Structures/Schemas/LogsChannel")
 
 const client = new Client({
     intents: 131071,
@@ -31,6 +32,25 @@ client.player = new Manager({
 
     }
 })
+
+process.on("unhandledRejection", (reason, p) => {
+    const ChannelID = GeneralLogsDB.findOne({ Guild: client.guild.id }).catch(err => console.log(err))
+    console.error("Unhandled promise rejection:", reason, p);
+    const Embed = new EmbedBuilder()
+        .setColor(client.color)
+        .setTimestamp()
+        .setFooter({ text: "⚠️Anti Crash system" })
+        .setTitle("Error Encountered");
+    const logChannel = client.channels.cache.get(ChannelID);
+    if (!Channel) return;
+    logChannel.send({
+        embeds: [
+            Embed.setDescription(
+                "**Unhandled Rejection/Catch:\n\n** ```" + reason + "```"
+            ),
+        ],
+    });
+});
 
 client.on("raw", (d) => client.player.updateVoiceState(d))
 
