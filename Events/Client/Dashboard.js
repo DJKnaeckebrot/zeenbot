@@ -1394,6 +1394,78 @@ module.exports = {
                             }
                         },
                         {
+                            optionId: "message",
+                            optionName: "Ticket message",
+                            optionDescription: "Set the message to be send when a ticket is being opened (use {member.user.tag} to get the user name)",
+                            optionType: DBD.formTypes.input("Our team will contact you shortly. Please describe your issue.", 1, 200, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Response
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Response: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Response = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "ticketpingstaff",
+                            optionName: "Ping Staff",
+                            optionDescription: "Set if the bot should ping the Ticket Handlers when a ticket is opened",
+                            optionType: DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.PingStaff
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        PingStaff: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.PingStaff = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
                             optionId: "category",
                             optionName: "Panel category",
                             optionDescription: "Set the channel category for the tickets",
