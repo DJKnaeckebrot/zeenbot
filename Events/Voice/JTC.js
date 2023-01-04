@@ -1,4 +1,4 @@
-const { Client, VoiceState, ChannelType, client } = require("discord.js");
+const { Client, VoiceState, ChannelType, client, EmbedBuilder} = require("discord.js");
 const DB = require("../../Structures/Schemas/VoiceSystem");
 
 module.exports = {
@@ -24,12 +24,30 @@ module.exports = {
                     parent: newChannel.parent,
                     permissionOverwrites: [
                         { id: member.user.id, allow: ["Connect"]},
-                        { id: guild.id, deny: ["Connect"]}
+                        { id: guild.id, allow: ["Connect"]}
                     ]
                 })
 
                 client.voiceGenerator.set(member.id, voiceChannel.id);
+                const userLimit = DB.findOne({ GuildID: guild.id }, async (err, Data) => {
+                    await voiceChannel.setUserLimit(Data.MaxSize);
+                    const voiceEmbed = new EmbedBuilder()
+                        .setColor(client.color)
+                        .setTitle("How to use the voice channels and its commands")
+                        .setFooter({ text: `${member.user.tag}'s voice channel`, iconURL: member.user.displayAvatarURL() })
+                        .setTimestamp()
+                        .addFields(
+                            { name: "Invite a person into a channel", value: "Use the /voice invite :person command to invite a person into your channel"},
+                            { name: "Disallow a person from a channel", value: "Use the /voice disallow :person command to disallow a person from your channel"},
+                            { name: "Change the size of the channel", value: "Use the /voice size :number command to change the size of your channel"},
+                            { name: "Make the channel public", value: "Use the /voice public :turn command to make your channel public"},
+                        )
+
+                    voiceChannel.send({ embeds: [voiceEmbed] });
+                })
+
                 await newChannel.permissionOverwrites.edit(member, {Connect: false});
+
                 setTimeout(() => newChannel.permissionOverwrites.delete(member), 30*1000);
 
                 return setTimeout(() => member.voice.setChannel(voiceChannel), 500);

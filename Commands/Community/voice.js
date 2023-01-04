@@ -1,8 +1,9 @@
 const { CommandInteraction, EmbedBuilder, SlashCommandBuilder, ApplicationCommandNumericOptionMinMaxValueMixin,
-    ApplicationCommandOptionType
+    ApplicationCommandOptionType, VoiceState, ChannelType, Client
 } = require("discord.js");
 const Reply = require("../../Systems/Reply");
 const EditReply = require("../../Systems/EditReply");
+const DB = require("../../Structures/Schemas/VoiceSystem");
 
 
 module.exports = {
@@ -72,6 +73,19 @@ module.exports = {
                     ]
                 }
             ]
+        },
+        {
+            name: "size",
+            description: "Change the size of your channel.",
+            type: 1,
+            options: [
+                {
+                    name: "maxuser",
+                    description: "Max amount of users allowed.",
+                    type: 3,
+                    required: true,
+                }
+            ]
         }
     ],
 
@@ -85,7 +99,7 @@ module.exports = {
 
         const subCommand = options.getSubcommand();
         const voiceChannel = member.voice.channel;
-        const Embed = new EmbedBuilder().setColor("#36393F");
+        const Embed = new EmbedBuilder().setColor(client.color);
         const ownedChannel = client.voiceGenerator.get(member.id);
 
         if(!voiceChannel)
@@ -129,10 +143,17 @@ module.exports = {
                         await EditReply(interaction, "✅", `The channel is now public`, true);
                     } else{
                         voiceChannel.permissionOverwrites.edit(guild.id, {Connect: false, ViewChannel: false}).catch(e => console.log(e));
+                        voiceChannel.permissionOverwrites.edit(member.id, {Connect: true, ViewChannel: true, SendMessages: true }).catch(e => console.log(e));
                         await EditReply(interaction, "✅", `The channel is now closed`, true);
                     }
                 } catch(error){console.log(error)}
 
+            }
+                break;
+            case "size": {
+                const maxUser = options.getString("maxuser");
+                await voiceChannel.setUserLimit(maxUser);
+                Reply(interaction, "✅", `The channel is now set to ${maxUser} users.`, true);
             }
                 break;
         }
