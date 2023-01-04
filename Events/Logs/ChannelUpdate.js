@@ -24,7 +24,7 @@ module.exports = {
         if (!data) return
 
         const logsChannel = data.Channel
-        const category = channel.parent
+        const category = oldChannel.parent
         const ignoredCategory = dbData.IgnoreChannels
 
         const Channel = await guild.channels.cache.get(logsChannel)
