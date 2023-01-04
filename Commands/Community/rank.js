@@ -33,10 +33,11 @@ module.exports = {
         await interaction.deferReply()
 
         const Required = Data.Level * Data.Level * 100 + 100
+        const background = Data.BackgroundImage || "https://cdn.discordapp.com/attachments/881202202001569812/881202222201733130/unknown.png"
 
         const rank = new Canvacord.Rank()
             .setAvatar(member.displayAvatarURL({ forceStatic: true }))
-            .setBackground("IMAGE", "https://cdn.discordapp.com/attachments/936585040668815412/1014566455750168668/unknown.png")
+            .setBackground("IMAGE", background)
             .setCurrentXP(Data.XP)
             .setRequiredXP(Required)
             .setRank(1, "Rank", false)

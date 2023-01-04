@@ -6,7 +6,7 @@ const PermissionsDB = require("../../Structures/Schemas/Permissions")
 const WelcomeDB = require("../../Structures/Schemas/Welcome")
 const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
 const LogsSwitchDB = require("../../Structures/Schemas/GeneralLogs")
-const ChannelDB = require("../../Structures/Schemas/LevelUpChannel")
+const LevelDB = require("../../Structures/Schemas/Level")
 const voiceDB = require("../../Structures/Schemas/VoiceSystem")
 const TicketDB = require("../../Structures/Schemas/Ticket")
 const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
@@ -1230,19 +1230,19 @@ module.exports = {
                             optionDescription: "Set the channel for the level up notifications",
                             optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
                             getActualSet: async ({ guild }) => {
-                                let data = await ChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await LevelDB.findOne({ Guild: guild.id }).catch(err => { })
                                 if (data) return data.Channel
                                 else return null
                             },
                             setNew: async ({ guild, newData }) => {
 
-                                let data = await ChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await LevelDB.find({ Guild: guild.id }).catch(err => { })
 
                                 if (!newData) newData = null
 
                                 if (!data) {
 
-                                    data = new ChannelDB({
+                                    data = new LevelDB({
                                         Guild: guild.id,
                                         Channel: newData,
                                     })
@@ -1251,8 +1251,49 @@ module.exports = {
 
                                 } else {
 
-                                    data.Channel = newData
+                                    for (const d of data) {
+                                        d.Channel = newData
+                                        await d.save()
+                                    }
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "levelcardbg",
+                            optionName: "Level card background URL",
+                            optionDescription: "Set the background image for the level card",
+                            optionType: DBD.formTypes.input("https://wallpaper.dog/large/961978.jpg", 1, 200, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await LevelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.BackgroundImage
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await LevelDB.find({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new LevelDB({
+                                        Guild: guild.id,
+                                        BackgroundImage: newData,
+                                    })
+
                                     await data.save()
+
+                                } else {
+
+                                    // Iterate through the array and update the data
+                                    for (const d of data) {
+                                        d.BackgroundImage = newData
+                                        await d.save()
+                                    }
 
                                 }
 
