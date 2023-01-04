@@ -50,9 +50,13 @@ module.exports = {
                     Claimed: false,
                 });
 
+                const responseText = data.Response || "Our team will contact you shortly. Please describe your issue.";
+
+                const replacedResponse = responseText.replace(/{member.user.tag}/g, member.user.tag)
+
                 const embed = new EmbedBuilder()
                     .setTitle(`${guild.name} - Ticket: ${customId}`)
-                    .setDescription("Our team will contact you shortly. Please describe your issue.")
+                    .setDescription(replacedResponse)
                     .setFooter({ text: `${ticketId}`, iconURL: member.displayAvatarURL({ dynamic: true }) })
                     .setTimestamp();
 
@@ -62,6 +66,8 @@ module.exports = {
                     new ButtonBuilder().setCustomId('unlock').setLabel('Unlock the ticket').setStyle(ButtonStyle.Success).setEmoji('🔓'),
                     new ButtonBuilder().setCustomId('claim').setLabel('Claim').setStyle(ButtonStyle.Secondary).setEmoji('🛄')
                 );
+
+                if (data.PingStaff) { channel.send("<@&" + data.Handlers + ">") }
 
                 channel.send({
                     embeds: ([embed]),

@@ -9,7 +9,7 @@ let ticketSchema = new Schema({
     Locked: Boolean,
     Type: String,
     Claimed: Boolean,
-    ClaimedBy: String
+    ClaimedBy: String,
 });
 
 module.exports = model("Ticket", ticketSchema);
