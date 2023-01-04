@@ -11,5 +11,6 @@ module.exports = model("generallogs", new Schema({
     ChannelStatus: Boolean,
     EmojiStatus: Boolean,
     MemberBan: Boolean,
+    MemberJoin: Boolean,
 
 }))
