@@ -62,9 +62,8 @@ module.exports = {
                     channel.send({ embeds: [transcriptProcesss] });
 
                     setTimeout(function () {
-                        member.send({
-                            embeds: [transcriptEmbed.setDescription(`Access your ticket transcript: ${res.url}`)]
-                        }).catch(() => channel.send('Couldn\'t send transcript to Direct Messages.'));
+                        member.send({ embeds: [transcriptEmbed.setDescription("Here is your transscript")], files: [transcript] })
+                            .catch(() => channel.send('Couldn\'t send transcript to Direct Messages.'));
                         channel.delete();
                     }, 10000);
 
