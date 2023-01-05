@@ -11,6 +11,7 @@ let ticketSetup = new Schema({
     Buttons: [String],
     Response: { type: String, default: "Our team will contact you shortly. Please describe your issue." },
     PingStaff: { type: Boolean, default: true },
+    TicketNumber: String
 });
 
 module.exports = model("TicketSetup", ticketSetup);

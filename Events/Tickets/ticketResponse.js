@@ -8,7 +8,17 @@ module.exports = {
     async execute(interaction) {
         const { guild, member, customId, channel } = interaction;
         const { ViewChannel, SendMessages, ManageChannels, ReadMessageHistory } = PermissionFlagsBits;
-        const ticketId = Math.floor(Math.random() * 9000) + 10000;
+
+        const lastTicketID = await ticketSchema.findOne({ GuildID: guild.id });
+        let ticketId = 1;
+
+        if (!lastTicketID) {
+            ticketId = zeroPad(ticketId, 5);
+        } else {
+            let newTicketId = ticketId + 1;
+            ticketId = zeroPad(newTicketId, 5);
+        }
+        // const ticketId = Math.floor(Math.random() * 9000) + 10000;
 
         if (!interaction.isButton()) return;
 
@@ -25,7 +35,7 @@ module.exports = {
 
         try {
             await guild.channels.create({
-                name: `${member.user.username}-ticket${ticketId}`,
+                name: `ticket-${ticketId}`,
                 type: ChannelType.GuildText,
                 parent: data.Category,
                 permissionOverwrites: [
@@ -76,10 +86,15 @@ module.exports = {
                     ]
                 });
 
-                interaction.reply({ content: "Succesfully created a ticket.", ephemeral: true });
+                interaction.reply({ content: `Succesfully created ticket. ${channel}`, ephemeral: true });
             });
         } catch (err) {
             return console.log(err);
         }
     }
+}
+
+function zeroPad(num, places) {
+    var zero = places - num.toString().length + 1;
+    return Array(+(zero > 0 && zero)).join("0") + num;
 }
