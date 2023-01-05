@@ -1,105 +1,119 @@
-// Deconstructing prefix from config file to use in help command
+const {
+    ComponentType,
+    EmbedBuilder,
+    SlashCommandBuilder,
+    ActionRowBuilder,
+    SelectMenuBuilder,
+    StringSelectMenuBuilder
+} = require("discord.js");
 
-require("dotenv").config();
-// eslint-disable-next-line no-undef
-const prefix = process.env.PREFIX;
-
-// Deconstructing EmbedBuilder to create embeds within this command
-const { EmbedBuilder, ChannelType } = require("discord.js");
-
-/**
- * @type {import('../../typings').LegacyCommand}
- */
 module.exports = {
     name: "help",
-    description: "List all commands of bot or info about a specific command.",
-    aliases: ["commands"],
-    usage: "[command name]",
-    cooldown: 5,
+    description: "Get a list of all the commands form the discord bot.",
+    usage: "/help",
+    parameter: "",
+    category: "Information",
+    premium: false,
 
-    execute(interaction, args) {
-        const { commands } = interaction.client;
+    async execute(interaction, client) {
+        const directories = [...new Set(client.commands.map((cmd) => cmd.category))];
 
-        // If there are no args, it means it needs whole help command.
+        //console.log(directories);
 
-        if (!args.length) {
-            /**
-             * @type {EmbedBuilder}
-             * @description Help command embed object
-             */
+        const emojis = {
+            community: "🌎",
+            content: "📜",
+            developer: "👨‍💻",
+            economy: "💰",
+            giveaway: "🎉",
+            information: "ℹ️",
+            moderation: "🛠️",
+            music: "🎵",
+            owner: "👑",
+            roles: "🎭",
+            tickets: "🎟️",
+            utility: "🔧",
+        };
 
-            let helpEmbed = new EmbedBuilder()
-                .setColor("Random")
-                .setTitle("List of all my commands")
+        const formatString = (str) =>
+            `${str[0].toUpperCase()}${str.slice(1).toLowerCase()}`;
+
+        const categories = directories.map((dir) => {
+            const getCommands = client.commands.filter((cmd) => cmd.category === dir).map((cmd) => {
+                return {
+                    name: cmd.name || "No name",
+                    description: cmd.description || "No description",
+                };
+            });
+
+            return {
+                directory: formatString(dir),
+                commands: getCommands,
+            };
+        });
+
+        const embed = new EmbedBuilder().setDescription(
+            "Please choose a category in the dropdown menu"
+        );
+
+        const components = (state) => [
+            new ActionRowBuilder().addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId("help-menu")
+                    .setPlaceholder("Please select a category")
+                    .setDisabled(state)
+                    .addOptions(
+                        categories.map((cmd) => {
+                            return {
+                                label: cmd.directory,
+                                value: cmd.directory.toLowerCase(),
+                                description: `Commands from ${cmd.directory} category.`,
+                                emoji: emojis[cmd.directory.toLowerCase() || null],
+                            };
+                        })
+                    )
+            ),
+        ];
+
+        const initialMessage = await interaction.reply({
+            embeds: [embed],
+            components: components(false),
+        });
+
+        const filter = (interaction) =>
+            interaction.user.id === interaction.member.id;
+
+        const collector = interaction.channel.createMessageComponentCollector({
+            filter,
+            componentType: ComponentType.SelectMenu,
+        });
+
+        collector.on("collect", (interaction) => {
+            const [directory] = interaction.values;
+            const category = categories.find(
+                (x) => x.directory.toLowerCase() === directory
+            );
+
+            const categoryEmbed = new EmbedBuilder()
+                .setTitle(`${formatString(directory)} commands`)
                 .setDescription(
-                    "`" + commands.map((command) => command.name).join("`, `") + "`"
+                    `A list of all the commands categorized under ${directory}`
                 )
+                .addFields(
+                    category.commands.map((cmd) => {
+                        return {
+                            name: `\`${cmd.name}\``,
+                            value: cmd.description,
+                            inline: true,
+                        };
+                    })
+                );
 
-                .addFields([
-                    {
-                        name: "Usage",
-                        value: `\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`,
-                    },
-                ]);
+            interaction.update({ embeds: [categoryEmbed] });
+        });
 
-            // Attempts to send embed in DMs.
-        }
-
-        // If argument is provided, check if it's a command.
-
-        /**
-         * @type {String}
-         * @description First argument in lower case
-         */
-
-        const name = args[0].toLowerCase();
-
-        const command =
-            commands.get(name) ||
-            commands.find((c) => c.aliases && c.aliases.includes(name));
-
-        // If it's an invalid command.
-
-        if (!command) {
-            return interaction.reply({ content: "That's not a valid command!" });
-        }
-
-        /**
-         * @type {EmbedBuilder}
-         * @description Embed of Help command for a specific command.
-         */
-
-        let commandEmbed = new EmbedBuilder()
-            .setColor("Random")
-            .setTitle("Command Help");
-
-        if (command.description)
-            commandEmbed.setDescription(`${command.description}`);
-
-        if (command.aliases)
-            commandEmbed.addFields([
-                {
-                    name: "Aliases",
-                    value: `\`${command.aliases.join(", ")}\``,
-                    inline: true,
-                },
-                {
-                    name: "Cooldown",
-                    value: `${command.cooldown || 3} second(s)`,
-                    inline: true,
-                },
-            ]);
-        if (command.usage)
-            commandEmbed.addFields([
-                {
-                    name: "Usage",
-                    value: `\`${prefix}${command.name} ${command.usage}\``,
-                    inline: true,
-                },
-            ]);
-
-        // Finally send the embed.
-
-        interaction.reply({ embeds: [commandEmbed] });
+        collector.on("end", () => {
+            initialMessage.edit({ components: components(true) });
+        });
     },
 };
