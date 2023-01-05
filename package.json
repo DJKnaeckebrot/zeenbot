@@ -14,6 +14,7 @@
     "ascii-table": "^0.0.9",
     "axios": "^1.2.1",
     "canvacord": "^5.4.6",
+    "captcha-canvas": "^3.2.1",
     "dbd-soft-ui": "^1.5.52-beta.1",
     "discord-canvas": "^1.5.2",
     "discord-dashboard": "*",

@@ -1,4 +1,4 @@
-const { Client, ChannelType } = require("discord.js")
+const { Client, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder} = require("discord.js")
 const config = require('./config.json');
 const SoftUI = require('dbd-soft-ui');
 let DBD = require('discord-dashboard');
@@ -11,7 +11,8 @@ const voiceDB = require("../../Structures/Schemas/VoiceSystem")
 const TicketDB = require("../../Structures/Schemas/Ticket")
 const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
 const antiLinkDB = require("../../Structures/Schemas/anitLink")
-const reportChannelDB = require("../../Structures/Schemas/ReportChannel")//fix the paths accordingly
+const reportChannelDB = require("../../Structures/Schemas/ReportChannel")
+const verificationDB = require("../../Structures/Schemas/Verification")
 
 module.exports = {
     name: "ready",
@@ -559,6 +560,397 @@ module.exports = {
 
                                     data.Channel = newData
                                     await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                    ]
+                },
+
+                // Verification
+                {
+                    categoryId: "verification",
+                    categoryName: "Verification Settings",
+                    categoryDescription: "Setup the verification settings for the bot",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
+                    categoryOptionsList: [
+                        {
+                            optionId: "verify",
+                            optionName: "Verification",
+                            optionDescription: "Enabled or Disable the Verification feature",
+                            optionType:  DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Enabled
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new verificationDB({
+                                        Guild: guild.id,
+                                        Enabled: newData,
+                                        Role: null,
+                                        Channel: null,
+                                        MessageID: null,
+                                        TimeOut: 30000,
+                                        Message: "Please verify yourself by clicking the button below"
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Enabled = newData
+                                    await data.save()
+
+                                }
+
+                                const channel = client.channels.cache.get(data.Channel);
+
+                                // console.log("Channel is set to : " + channel)
+
+                                if (newData == true) {
+                                    let message = await channel.send({
+                                        embeds: [
+                                            new EmbedBuilder()
+                                                .setColor(client.color)
+                                                .setTitle("✅ | Verification")
+                                                .setDescription(data.Message)
+                                                .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                .setTimestamp()
+                                        ],
+                                        components: [
+                                            new ActionRowBuilder().addComponents(
+                                                new ButtonBuilder()
+                                                    .setLabel("Verify")
+                                                    .setStyle(ButtonStyle.Secondary)
+                                                    .setCustomId("verify")
+                                            )
+                                        ]
+                                    })
+                                    let messageID = message.id;
+
+                                    data.MessageID = messageID;
+                                    await data.save();
+                                }
+
+                                if (newData == false) {
+                                    let message = data.MessageID;
+                                    message.delete();
+                                }
+
+                                return
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "No Data found yet! Please set the verification settings first!"}
+                                if (!data.Role) return {allowed: false, errorMessage: "You are missing the verification role"}
+                                if (!data.Channel) return {allowed: false, errorMessage: "You are missing the verification channel"}
+                                return {
+                                    allowed: true,
+                                    errorMessage: null
+                                };
+                            },
+                        },
+                        {
+                            optionId: "verifych",
+                            optionName: "Verification Channel",
+                            optionDescription: "Set or reset the server's verification channel",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Channel
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                const channel = client.channels.cache.get(newData);
+
+                                console.log("Channel is set to : " + channel)
+
+                                if (!data) {
+
+                                    data = new verificationDB({
+                                        Guild: guild.id,
+                                        Enabled: false,
+                                        Role: null,
+                                        Channel: newData,
+                                        MessageID: null,
+                                        TimeOut: 30000,
+                                        Message: "Please verify yourself by clicking the button below"
+                                    })
+
+                                    await data.save()
+
+                                    if (data.Enabled === true) {
+                                        let message = await channel.send({
+                                            embeds: [
+                                                new EmbedBuilder()
+                                                    .setColor(client.color)
+                                                    .setTitle("✅ | Verification")
+                                                    .setDescription(data.Message)
+                                                    .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                    .setTimestamp()
+                                            ],
+                                            components: [
+                                                new ActionRowBuilder().addComponents(
+                                                    new ButtonBuilder()
+                                                        .setLabel("Verify")
+                                                        .setStyle(ButtonStyle.Secondary)
+                                                        .setCustomId("verify")
+                                                )
+                                            ]
+                                        })
+                                        let messageID = message.id;
+
+                                        data.MessageID = messageID;
+                                        await data.save();
+                                    }
+
+                                } else {
+
+                                    let channelChanged = false
+
+                                    if (data.Channel !== newData) {
+                                        channelChanged = true
+                                    }
+
+                                    const oldChannel = client.channels.cache.get(newData);
+
+                                    data.Channel = newData
+                                    await data.save()
+
+                                    if (channelChanged) {
+                                        if (data.Enabled === true) {
+                                            let message = await channel.send({
+                                                embeds: [
+                                                    new EmbedBuilder()
+                                                        .setColor(client.color)
+                                                        .setTitle("✅ | Verification")
+                                                        .setDescription(data.Message)
+                                                        .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                        .setTimestamp()
+                                                ],
+                                                components: [
+                                                    new ActionRowBuilder().addComponents(
+                                                        new ButtonBuilder()
+                                                            .setLabel("Verify")
+                                                            .setStyle(ButtonStyle.Secondary)
+                                                            .setCustomId("verify")
+                                                    )
+                                                ]
+                                            })
+                                            let messageID = message.id;
+
+                                            let oldMessageID = data.MessageID;
+
+                                            // oldChannel.messages.fetch(oldMessageID).then(msg => msg.delete());
+                                            oldChannel.messages.fetch(oldMessageID).then(message => console.log(message.content));
+
+                                            data.MessageID = messageID;
+                                            await data.save();
+                                        }
+                                    }
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "verifyto",
+                            optionName: "Verification Timeout",
+                            optionDescription: "Set verification timeout in ms (1000ms = 1s)",
+                            optionType: DBD.formTypes.input(30000, 1000, 120000),
+                            getActualSet: async ({ guild }) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.TimeOut
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new verificationDB({
+                                        Guild: guild.id,
+                                        Enabled: false,
+                                        Role: null,
+                                        Channel: null,
+                                        MessageID: null,
+                                        TimeOut: newData,
+                                        Message: "Please verify yourself by clicking the button below"
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.TimeOut = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "verifyrole",
+                            optionName: "Verification Role",
+                            optionDescription: "Set the role that should be given to verified users",
+                            optionType: DBD.formTypes.rolesSelect(false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Role
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new verificationDB({
+                                        Guild: guild.id,
+                                        Enabled: false,
+                                        Role: newData,
+                                        Channel: null,
+                                        MessageID: null,
+                                        TimeOut: 30000,
+                                        Message: "Please verify yourself by clicking the button below"
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Role = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "verifymsg",
+                            optionName: "Verification Message",
+                            optionDescription: "Set message that should be sent in the embed",
+                            optionType: DBD.formTypes.input("Please verify yourself by clicking the button below", 1, 200, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Message
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await verificationDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                const channel = client.channels.cache.get(newData);
+
+                                if (!data) {
+
+                                    data = new verificationDB({
+                                        Guild: guild.id,
+                                        Enabled: false,
+                                        Role: null,
+                                        Channel: null,
+                                        MessageID: null,
+                                        TimeOut: 30000,
+                                        Message: newData
+                                    })
+
+                                    await data.save()
+
+                                    if (data.Enabled === true) {
+                                        let message = await channel.send({
+                                            embeds: [
+                                                new EmbedBuilder()
+                                                    .setColor(client.color)
+                                                    .setTitle("✅ | Verification")
+                                                    .setDescription(data.Message)
+                                                    .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                    .setTimestamp()
+                                            ],
+                                            components: [
+                                                new ActionRowBuilder().addComponents(
+                                                    new ButtonBuilder()
+                                                        .setLabel("Verify")
+                                                        .setStyle(ButtonStyle.Secondary)
+                                                        .setCustomId("verify")
+                                                )
+                                            ]
+                                        })
+                                        let messageID = message.id;
+
+                                        data.MessageID = messageID;
+                                        await data.save();
+                                    }
+
+                                } else {
+
+                                    data.Message = newData
+                                    await data.save()
+
+                                    let messageChanged = false
+
+                                    if (data.Message !== newData) {
+                                        messageChanged = true
+                                    }
+
+                                    if (messageChanged) {
+                                        console.log("message changed")
+                                        if (data.Enabled === true) {
+                                            let message = await channel.send({
+                                                embeds: [
+                                                    new EmbedBuilder()
+                                                        .setColor(client.color)
+                                                        .setTitle("✅ | Verification")
+                                                        .setDescription(data.Message)
+                                                        .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                        .setTimestamp()
+                                                ],
+                                                components: [
+                                                    new ActionRowBuilder().addComponents(
+                                                        new ButtonBuilder()
+                                                            .setLabel("Verify")
+                                                            .setStyle(ButtonStyle.Secondary)
+                                                            .setCustomId("verify")
+                                                    )
+                                                ]
+                                            })
+                                            let messageID = message.id;
+
+                                            let oldMessageID = data.MessageID;
+
+                                            channel.fetchMessage(oldMessageID.then(msg => msg.delete()))
+
+                                            data.MessageID = messageID;
+                                            await data.save();
+                                        }
+                                    }
 
                                 }
 
