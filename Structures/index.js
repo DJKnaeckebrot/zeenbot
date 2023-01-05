@@ -34,16 +34,16 @@ client.player = new Manager({
 })
 
 process.on("unhandledRejection", (reason, p) => {
-    const ChannelID = GeneralLogsDB.findOne({ Guild: client.guild.id }).catch(err => console.log(err))
+    const ChannelID = "1060478836728406036";
     console.error("Unhandled promise rejection:", reason, p);
     const Embed = new EmbedBuilder()
         .setColor(client.color)
         .setTimestamp()
         .setFooter({ text: "⚠️Anti Crash system" })
         .setTitle("Error Encountered");
-    const logChannel = client.channels.cache.get(ChannelID);
+    const Channel = client.channels.cache.get(ChannelID);
     if (!Channel) return;
-    logChannel.send({
+    Channel.send({
         embeds: [
             Embed.setDescription(
                 "**Unhandled Rejection/Catch:\n\n** ```" + reason + "```"
