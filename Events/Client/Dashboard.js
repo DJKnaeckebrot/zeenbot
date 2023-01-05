@@ -615,8 +615,6 @@ module.exports = {
 
                                 const channel = client.channels.cache.get(data.Channel);
 
-                                // console.log("Channel is set to : " + channel)
-
                                 if (newData == true) {
                                     let message = await channel.send({
                                         embeds: [
@@ -642,9 +640,18 @@ module.exports = {
                                     await data.save();
                                 }
 
-                                if (newData == false) {
-                                    let message = data.MessageID;
-                                    message.delete();
+                                if (newData == null) {
+                                    const messageID = data.MessageID
+
+                                    const channelId = data.Channel
+                                    const messageId = messageID
+
+                                    client.channels.fetch(channelId).then(channel => {
+                                        channel.messages.delete(messageId);
+                                    });
+
+                                    data.MessageID = null
+                                    await data.save();
                                 }
 
                                 return
@@ -732,8 +739,9 @@ module.exports = {
                                     data.Channel = newData
                                     await data.save()
 
-                                    if (channelChanged) {
                                         if (data.Enabled === true) {
+                                            console.log("Channel Changed: " + channelChanged)
+                                            console.log("sending new message")
                                             let message = await channel.send({
                                                 embeds: [
                                                     new EmbedBuilder()
@@ -752,17 +760,23 @@ module.exports = {
                                                     )
                                                 ]
                                             })
-                                            let messageID = message.id;
+                                            const oldMessageID = data.MessageID
 
-                                            let oldMessageID = data.MessageID;
+                                            const messageID = message.id
 
-                                            // oldChannel.messages.fetch(oldMessageID).then(msg => msg.delete());
-                                            oldChannel.messages.fetch(oldMessageID).then(message => console.log(message.content));
+                                            const channelId = data.Channel
+                                            const messageId = oldMessageID
+
+                                            console.log("Removing message with id : " + oldMessageID + " from channel" + channelId)
+
+                                            client.channels.fetch(channelId).then(channel => {
+                                                channel.messages.delete(messageId);
+                                            });
 
                                             data.MessageID = messageID;
                                             await data.save();
                                         }
-                                    }
+
 
                                 }
 
@@ -868,15 +882,12 @@ module.exports = {
 
                                 if (!newData) newData = null
 
-                                const channel = client.channels.cache.get(newData);
-
                                 if (!data) {
 
                                     data = new verificationDB({
                                         Guild: guild.id,
                                         Enabled: false,
                                         Role: null,
-                                        Channel: null,
                                         MessageID: null,
                                         TimeOut: 30000,
                                         Message: newData
@@ -885,7 +896,10 @@ module.exports = {
                                     await data.save()
 
                                     if (data.Enabled === true) {
-                                        let message = await channel.send({
+
+                                        const channel = client.channels.cache.get(data.Channel);
+
+                                        channel.send({
                                             embeds: [
                                                 new EmbedBuilder()
                                                     .setColor(client.color)
@@ -903,26 +917,17 @@ module.exports = {
                                                 )
                                             ]
                                         })
-                                        let messageID = message.id;
-
-                                        data.MessageID = messageID;
-                                        await data.save();
                                     }
 
                                 } else {
 
-                                    data.Message = newData
-                                    await data.save()
+                                        data.Message = newData
+                                        await data.save()
 
-                                    let messageChanged = false
-
-                                    if (data.Message !== newData) {
-                                        messageChanged = true
-                                    }
-
-                                    if (messageChanged) {
-                                        console.log("message changed")
                                         if (data.Enabled === true) {
+
+                                            const channel = client.channels.cache.get(data.Channel);
+
                                             let message = await channel.send({
                                                 embeds: [
                                                     new EmbedBuilder()
@@ -941,16 +946,21 @@ module.exports = {
                                                     )
                                                 ]
                                             })
-                                            let messageID = message.id;
 
-                                            let oldMessageID = data.MessageID;
+                                            const oldMessageID = data.MessageID
 
-                                            channel.fetchMessage(oldMessageID.then(msg => msg.delete()))
+                                            const messageID = message.id
+
+                                            const channelId = data.Channel
+                                            const messageId = oldMessageID
+
+                                            client.channels.fetch(channelId).then(channel => {
+                                                channel.messages.delete(messageId);
+                                            });
 
                                             data.MessageID = messageID;
                                             await data.save();
                                         }
-                                    }
 
                                 }
 
