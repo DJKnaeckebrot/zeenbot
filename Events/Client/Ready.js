@@ -22,7 +22,7 @@ module.exports = {
             const ping = ws.ping
 
             user.setActivity({
-                name: `zeenbot.de | Ping: ${ping} ms`,
+                name: `zeenbot.de | ${client.guilds.cache.size} servers`,
                 type: 3,
             })
 
