@@ -11,6 +11,7 @@ const voiceDB = require("../../Structures/Schemas/VoiceSystem")
 const TicketDB = require("../../Structures/Schemas/Ticket")
 const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
 const antiLinkDB = require("../../Structures/Schemas/anitLink")
+const reportChannelDB = require("../../Structures/Schemas/ReportChannel")//fix the paths accordingly
 
 module.exports = {
     name: "ready",
@@ -524,33 +525,39 @@ module.exports = {
                             }
                         },
                         {
-                            optionId: "anticrashch",
-                            optionName: "Anitcrash notification channel",
-                            optionDescription: "Set the channel for the anti crash handler",
+                            optionId: "reportch",
+                            optionName: "Report Channel",
+                            optionDescription: "Set or disable the report channel",
                             optionType:  DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
                             getActualSet: async ({ guild }) => {
-                                let data = await GeneralLogsDB.findOne({ Guild: guild.id }).catch(err => { })
-                                if (data) return data.AntiCrashChannel
+                                let data = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Channel
                                 else return null
                             },
                             setNew: async ({ guild, newData }) => {
 
-                                let data = await GeneralLogsDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
 
-                                if (!newData) newData = null
+                                if (!newData) {
+                                    newData = null
+                                    let data = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                    if (!data) return
+
+                                    await reportChannelDB.deleteOne({ Guild: guild.id }).catch(err => { })
+                                }
 
                                 if (!data) {
 
-                                    data = new GeneralLogsDB({
+                                    data = new reportChannelDB({
                                         Guild: guild.id,
-                                        AntiCrashChannel: newData,
+                                        Channel: newData,
                                     })
 
                                     await data.save()
 
                                 } else {
 
-                                    data.AntiCrashChannel = newData
+                                    data.Channel = newData
                                     await data.save()
 
                                 }
