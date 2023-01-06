@@ -18,6 +18,8 @@ module.exports = {
 
         if (!docs) return;
 
+        let color = docs.TicketEmbedColor || "Blue";
+
         if (!guild.members.me.permissions.has((r) => r.id === docs.Handlers))
             return interaction.reply({ content: "I don't have permissions for this.", ephemeral: true });
 
@@ -29,12 +31,6 @@ module.exports = {
 
             const fetchedMember = await guild.members.cache.get(data.MembersID);
 
-            const transcript = await createTranscript(channel, {
-                limit: -1,
-                returnBuffer: false,
-                fileName: `${member.user.username}-ticket${data.Type}-${data.TicketID}.html`,
-            });
-
             const transcriptEmbed = new EmbedBuilder()
                 .setTitle(`${member.user.tag}'s Ticket`)
                 .addFields(
@@ -43,10 +39,17 @@ module.exports = {
                     { name: "Ticket Owner", value: data.MembersID[0], inline: true }
                 )
                 .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
+                .setColor(color)
                 .setTimestamp();
 
             switch (customId) {
                 case "transcript":
+                    const transcript = await createTranscript(channel, {
+                        limit: -1,
+                        returnBuffer: false,
+                        fileName: `${member.user.username}-ticket${data.Type}-${data.TicketID}.html`,
+                    });
+
                     const transcriptButtonEmbed = new EmbedBuilder()
                         .setTitle("Transcript")
                         .setDescription(`Transcript has been saved to <#${docs.Transcripts}>`)
@@ -64,6 +67,7 @@ module.exports = {
 
                     const res = await guild.channels.cache.get(docs.Transcripts).send({
                         embeds: [transcriptEmbed],
+                        files: [transcript],
                     });
 
                     interaction.deferUpdate();

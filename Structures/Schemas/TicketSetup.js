@@ -7,6 +7,7 @@ let ticketSetup = new Schema({
     Transcripts: String,
     DMTranscripts: { type: Boolean, default: false },
     TicketName: { type: String, default: "ticket" },
+    TicketEmbedColor: { type: String, default: "Blue" },
     Handlers: String,
     Everyone: String,
     Description: { type: String, default: "Please hit one of the buttons below to open a ticket!" },

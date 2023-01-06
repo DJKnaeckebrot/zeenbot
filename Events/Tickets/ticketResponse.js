@@ -19,6 +19,7 @@ module.exports = {
             return;
 
         let buttons = [];
+        let color = data.TicketEmbedColor || "Blue";
 
         if (data.Button1) buttons.push(data.Button1)
         if (data.Button2) buttons.push(data.Button2)
@@ -90,6 +91,7 @@ module.exports = {
 
                 const embed = new EmbedBuilder()
                     .setTitle(`${guild.name} - ${member.user.tag}'s Ticket`)
+                    .setColor(color)
                     .setDescription(replacedResponse)
                     .setFooter({ text: `${ticketId}`, iconURL: member.displayAvatarURL({ dynamic: true }) })
                     .setTimestamp();
