@@ -12,7 +12,7 @@ module.exports = {
 
         if (!interaction.isButton()) return;
 
-        if (!["reopen", "delete", "close", "lock", "unlock", "claim"].includes(customId)) return;
+        if (!["transcript", "reopen", "delete", "close", "lock", "unlock", "claim"].includes(customId)) return;
 
         const docs = await TicketSetup.findOne({ GuildID: guild.id });
 
@@ -36,24 +36,60 @@ module.exports = {
             });
 
             const transcriptEmbed = new EmbedBuilder()
-                .setTitle(`Transcript Type: ${data.Type}\nId: ${data.TicketID}`)
+                .setTitle(`${member.user.tag}'s Ticket`)
+                .addFields(
+                    { name: "Ticket Type", value: data.Type, inline: true },
+                    { name: "Ticket ID", value: data.TicketID, inline: true },
+                    { name: "Ticket Owner", value: data.MembersID[0], inline: true }
+                )
                 .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
                 .setTimestamp();
 
             switch (customId) {
+                case "transcript":
+                    const transcriptButtonEmbed = new EmbedBuilder()
+                        .setTitle("Transcript")
+                        .setDescription(`Transcript has been saved to <#${docs.Transcripts}>`)
+                        .setColor("Green")
+                        .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
+                        .setTimestamp();
+
+                    if (data.DMTranscripts){
+                        transcriptButtonEmbed.setDescription(`Transcript has been saved to <#${docs.Transcripts}> and the user`)
+                        member.send({ embeds: [transcriptEmbed.setDescription("Here is your transcript")], files: [transcript] })
+                            .catch(() => channel.send('Couldn\'t send transcript to Direct Messages.'));
+                    }
+
+                    channel.send({ embeds: [transcriptButtonEmbed] });
+
+                    const res = await guild.channels.cache.get(docs.Transcripts).send({
+                        embeds: [transcriptEmbed],
+                    });
+
+                    interaction.deferUpdate();
+                    break;
                 case "reopen":
                     await ticketSchema.updateOne({ ChannelID: channel.id }, { Closed: false });
+
+                    interaction.message.delete();
+
                     const reopenEmbed = new EmbedBuilder()
                         .setTitle("Ticket Reopened")
                         .setDescription(`Ticket has been reopened by ${member.user.tag}`)
                         .setColor("Green")
                         .setTimestamp();
 
-                    await channel.permissionOverwrites.edit(member, { ViewChannel: true });
+                    data.MembersID.forEach((m) => {
+                        channel.permissionOverwrites.edit(m, { ViewChannel: true });
+                    });
 
-                    const reopenChannelName = channel.name.replace("closed-", "ticket-");
+                    console.log(`Reopening naming channel : ${channel.name}`)
+
+                    const reopenChannelName = channel.name.replace("closed", data.TicketName);
 
                     channel.setName(reopenChannelName);
+
+                    console.log(`Channel is called after reopening : ${channel.name}`)
 
                     await channel.send({ embeds: [reopenEmbed] });
 
@@ -64,22 +100,16 @@ module.exports = {
                 case "delete":
                     const deleteEmbed = new EmbedBuilder()
                         .setTitle("Ticket will be deleted")
-                        .setDescription(`This ticket will be deleted in 10 seconds. \n Transscript has been saved to <#${docs.Transcripts}>`)
+                        .setDescription(`This ticket will be deleted in 10 seconds.`)
                         .setColor("Red")
                         .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
                         .setTimestamp();
 
                     channel.send({ embeds: [deleteEmbed] });
 
-                    const res = await guild.channels.cache.get(docs.Transcripts).send({
-                        embeds: [transcriptEmbed],
-                    });
-
                     await interaction.deferUpdate()
 
                     setTimeout(function () {
-                        member.send({ embeds: [transcriptEmbed.setDescription("Here is your transscript")], files: [transcript] })
-                            .catch(() => channel.send('Couldn\'t send transcript to Direct Messages.'));
                         channel.delete();
                     }, 10000);
                     break;
@@ -101,6 +131,7 @@ module.exports = {
 
                     const button = new ActionRowBuilder().setComponents(
                         new ButtonBuilder().setCustomId('reopen').setLabel('Reopen').setStyle(ButtonStyle.Primary).setEmoji('🔓'),
+                        new ButtonBuilder().setCustomId('transcript').setLabel('Save Transcript').setStyle(ButtonStyle.Danger).setEmoji('📜'),
                         new ButtonBuilder().setCustomId('delete').setLabel('Delete').setStyle(ButtonStyle.Danger).setEmoji('⛔')
                     );
 
@@ -110,7 +141,7 @@ module.exports = {
                         channel.permissionOverwrites.edit(m, { ViewChannel: false });
                     });
 
-                    const closeChannelName = channel.name.replace("ticket-", "closed-");
+                    const closeChannelName = channel.name.replace(data.TicketName, "closed");
 
                     await channel.setName(closeChannelName);
 
@@ -126,7 +157,7 @@ module.exports = {
                         return interaction.reply({ content: "Ticket is already set to locked.", ephemeral: true });
 
                     await ticketSchema.updateOne({ ChannelID: channel.id }, { Locked: true });
-                    embed.setDescription("Ticket was locked succesfully 🔒");
+                    embed.setDescription("Ticket was locked successfully 🔒");
 
                     data.MembersID.forEach((m) => {
                         channel.permissionOverwrites.edit(m, { SendMessages: false });
