@@ -151,7 +151,9 @@ module.exports = {
                                 }
                             },
                             preloader: {
-                                text: "Page is loading..."
+                                text: "Page is loading...",
+                                image: "https://cdn.discordapp.com/attachments/1041329286969294858/1060965096215560192/output-onlinegiftools.gif",
+                                spinner: false
                             },
                             premium: {
                                 title: "Want more from zeenbot? ⭐",
@@ -259,7 +261,9 @@ module.exports = {
                                 }
                             },
                             preloader: {
-                                text: "Seite lädt..."
+                                image: "https://cdn.discordapp.com/attachments/1041329286969294858/1060965096215560192/output-onlinegiftools.gif",
+                                text: "Page is loading...",
+                                spinner: false
                             },
                             premium: {
                                 title: "Du willst mehr von zeenbot?",
@@ -344,9 +348,9 @@ module.exports = {
                     }
                 },
                 preloader: {
-                    image: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
-                    spinner: false,
-                    text: "Page is loading",
+                    image: "https://cdn.discordapp.com/attachments/1041329286969294858/1060965096215560192/output-onlinegiftools.gif",
+                    text: "Page is loading...",
+                    spinner: false
                 },
                 premium: {
                     enabled: true,
@@ -2196,7 +2200,7 @@ module.exports = {
                         {
                             optionId: "ticketname",
                             optionName: "Ticket name ⭐",
-                            optionDescription: "Set the name of the ticket. Ticket will be called {ticketname}-XXXXX",
+                            optionDescription: "Set the name of the ticket. Ticket will be called {ticketname}-XXXXX. Available Variables {member.user.id} = username",
                             optionType: DBD.formTypes.input("ticket", 1, 200, false, false),
                             getActualSet: async ({ guild }) => {
                                 let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
