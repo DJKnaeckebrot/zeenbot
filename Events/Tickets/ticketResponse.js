@@ -18,8 +18,14 @@ module.exports = {
         if (!data)
             return;
 
-        if (!data.Buttons.includes(customId))
-            return;
+        let buttons = [];
+
+        if (data.Button1) buttons.push(data.Button1)
+        if (data.Button2) buttons.push(data.Button2)
+        if (data.Button3) buttons.push(data.Button3)
+        if (data.Button4) buttons.push(data.Button4)
+
+        if (!buttons.includes(customId)) return;
 
         if (!guild.members.me.permissions.has(ManageChannels))
             interaction.reply({ content: "I don't have permissions for this.", ephemeral: true });
@@ -42,8 +48,18 @@ module.exports = {
                 ticketId = zeroPad(newTicketId, 5);
             }
 
+            let ticketName = "ticket"
+
+            if (!data.TicketName) {
+                ticketName = data.TicketName
+            } else {
+                if (data.TicketName === "{member.user.id}") {
+                    ticketName = member.user.tag
+                }
+            }
+
             await guild.channels.create({
-                name: `ticket-${ticketId}`,
+                name: `${ticketName}-${ticketId}`,
                 type: ChannelType.GuildText,
                 parent: data.Category,
                 permissionOverwrites: [

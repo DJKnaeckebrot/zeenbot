@@ -5,6 +5,8 @@ let ticketSetup = new Schema({
     Channel: String,
     Category: String,
     Transcripts: String,
+    DMTranscripts: { type: Boolean, default: false },
+    TicketName: { type: String, default: "ticket" },
     Handlers: String,
     Everyone: String,
     Description: { type: String, default: "Please hit one of the buttons below to open a ticket!" },
