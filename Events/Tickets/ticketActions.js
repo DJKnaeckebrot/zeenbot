@@ -1,4 +1,4 @@
-const { ButtonInteraction, EmbedBuilder, PermissionFlagsBits } = require("discord.js");
+const { ButtonInteraction, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
 const { createTranscript } = require("discord-html-transcripts");
 const TicketSetup = require("../../Structures/Schemas/TicketSetup");
 const ticketSchema = require("../../Structures/Schemas/Ticket");
@@ -12,7 +12,7 @@ module.exports = {
 
         if (!interaction.isButton()) return;
 
-        if (!["close", "lock", "unlock", "claim"].includes(customId)) return;
+        if (!["reopen", "delete", "close", "lock", "unlock", "claim"].includes(customId)) return;
 
         const docs = await TicketSetup.findOne({ GuildID: guild.id });
 
@@ -29,43 +29,92 @@ module.exports = {
 
             const fetchedMember = await guild.members.cache.get(data.MembersID);
 
+            const transcript = await createTranscript(channel, {
+                limit: -1,
+                returnBuffer: false,
+                fileName: `${member.user.username}-ticket${data.Type}-${data.TicketID}.html`,
+            });
+
+            const transcriptEmbed = new EmbedBuilder()
+                .setTitle(`Transcript Type: ${data.Type}\nId: ${data.TicketID}`)
+                .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
+                .setTimestamp();
+
             switch (customId) {
-                case "close":
-                    if (data.closed == true)
-                        return interaction.reply({ content: "Ticket is already getting deleted...", ephemeral: true });
-
-                    const transcript = await createTranscript(channel, {
-                        limit: -1,
-                        returnBuffer: false,
-                        fileName: `${member.user.username}-ticket${data.Type}-${data.TicketID}.html`,
-                    });
-
-                    await ticketSchema.updateOne({ ChannelID: channel.id }, { Closed: true });
-
-                    const transcriptEmbed = new EmbedBuilder()
-                        .setTitle(`Transcript Type: ${data.Type}\nId: ${data.TicketID}`)
-                        .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
+                case "reopen":
+                    await ticketSchema.updateOne({ ChannelID: channel.id }, { Closed: false });
+                    const reopenEmbed = new EmbedBuilder()
+                        .setTitle("Ticket Reopened")
+                        .setDescription(`Ticket has been reopened by ${member.user.tag}`)
+                        .setColor("Green")
                         .setTimestamp();
 
-                    const transcriptProcesss = new EmbedBuilder()
-                        .setTitle('Saving transcript...')
-                        .setDescription("Ticket will be closed in 10 seconds, enable DM's for the ticket transcript.")
+                    await channel.permissionOverwrites.edit(member, { ViewChannel: true });
+
+                    const reopenChannelName = channel.name.replace("closed-", "ticket-");
+
+                    channel.setName(reopenChannelName);
+
+                    await channel.send({ embeds: [reopenEmbed] });
+
+                    await interaction.deferUpdate()
+
+                    break;
+
+                case "delete":
+                    const deleteEmbed = new EmbedBuilder()
+                        .setTitle("Ticket will be deleted")
+                        .setDescription(`This ticket will be deleted in 10 seconds. \n Transscript has been saved to <#${docs.Transcripts}>`)
                         .setColor("Red")
                         .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
                         .setTimestamp();
 
+                    channel.send({ embeds: [deleteEmbed] });
+
                     const res = await guild.channels.cache.get(docs.Transcripts).send({
                         embeds: [transcriptEmbed],
-                        files: [transcript],
                     });
 
-                    channel.send({ embeds: [transcriptProcesss] });
+                    await interaction.deferUpdate()
 
                     setTimeout(function () {
                         member.send({ embeds: [transcriptEmbed.setDescription("Here is your transscript")], files: [transcript] })
                             .catch(() => channel.send('Couldn\'t send transcript to Direct Messages.'));
                         channel.delete();
                     }, 10000);
+                    break;
+                case "close":
+                    if (data.closed == true)
+                        return interaction.reply({ content: "Ticket is already getting deleted...", ephemeral: true });
+
+                    const closeEmbed = new EmbedBuilder()
+                        .setTitle("Ticket closed")
+
+                    await ticketSchema.updateOne({ ChannelID: channel.id }, { Closed: true });
+
+                    const transcriptProcesss = new EmbedBuilder()
+                        .setTitle('Ticket closed')
+                        .setDescription(`Ticket was closed by ${interaction.user}.` )
+                        .setColor("Red")
+                        .setFooter({ text: member.user.tag, iconURL: member.displayAvatarURL({ dynamic: true }) })
+                        .setTimestamp();
+
+                    const button = new ActionRowBuilder().setComponents(
+                        new ButtonBuilder().setCustomId('reopen').setLabel('Reopen').setStyle(ButtonStyle.Primary).setEmoji('🔓'),
+                        new ButtonBuilder().setCustomId('delete').setLabel('Delete').setStyle(ButtonStyle.Danger).setEmoji('⛔')
+                    );
+
+                    channel.send({ embeds: [transcriptProcesss], components: [button] });
+
+                    data.MembersID.forEach((m) => {
+                        channel.permissionOverwrites.edit(m, { ViewChannel: false });
+                    });
+
+                    const closeChannelName = channel.name.replace("ticket-", "closed-");
+
+                    await channel.setName(closeChannelName);
+
+                    await interaction.deferUpdate()
 
                     break;
 
@@ -115,6 +164,7 @@ module.exports = {
                     interaction.reply({ embeds: [embed] });
 
                     break;
+
             }
         });
     }

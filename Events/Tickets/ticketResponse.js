@@ -9,15 +9,6 @@ module.exports = {
         const { guild, member, customId, channel } = interaction;
         const { ViewChannel, SendMessages, ManageChannels, ReadMessageHistory } = PermissionFlagsBits;
 
-        const lastTicketID = await ticketSchema.findOne({ GuildID: guild.id });
-        let ticketId = 1;
-
-        if (!lastTicketID) {
-            ticketId = zeroPad(ticketId, 5);
-        } else {
-            let newTicketId = ticketId + 1;
-            ticketId = zeroPad(newTicketId, 5);
-        }
         // const ticketId = Math.floor(Math.random() * 9000) + 10000;
 
         if (!interaction.isButton()) return;
@@ -33,14 +24,31 @@ module.exports = {
         if (!guild.members.me.permissions.has(ManageChannels))
             interaction.reply({ content: "I don't have permissions for this.", ephemeral: true });
 
+
         try {
+            const lastTicket = await TicketSetup.findOne({ GuildID: guild.id });
+            const lastTicketID = lastTicket.TicketNumber
+            let ticketId = 1;
+            let newTicketId = 1;
+
+            if (!lastTicketID) {
+                lastTicket.TicketNumber = ticketId;
+                await lastTicket.save();
+                ticketId = zeroPad(ticketId, 5);
+            } else {
+                newTicketId = lastTicketID + 1;
+                lastTicket.TicketNumber = newTicketId;
+                await lastTicket.save();
+                ticketId = zeroPad(newTicketId, 5);
+            }
+
             await guild.channels.create({
                 name: `ticket-${ticketId}`,
                 type: ChannelType.GuildText,
                 parent: data.Category,
                 permissionOverwrites: [
                     {
-                        id: data.Everyone,
+                        id: guild.id,
                         deny: [ViewChannel, SendMessages, ReadMessageHistory],
                     },
                     {
@@ -65,7 +73,7 @@ module.exports = {
                 const replacedResponse = responseText.replace(/{member.user.tag}/g, member.user.tag)
 
                 const embed = new EmbedBuilder()
-                    .setTitle(`${guild.name} - Ticket: ${customId}`)
+                    .setTitle(`${guild.name} - ${member.user.tag}'s Ticket`)
                     .setDescription(replacedResponse)
                     .setFooter({ text: `${ticketId}`, iconURL: member.displayAvatarURL({ dynamic: true }) })
                     .setTimestamp();
