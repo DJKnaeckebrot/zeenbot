@@ -13,6 +13,8 @@ const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
 const antiLinkDB = require("../../Structures/Schemas/anitLink")
 const reportChannelDB = require("../../Structures/Schemas/ReportChannel")
 const verificationDB = require("../../Structures/Schemas/Verification")
+const premiumDB = require("../../Structures/Schemas/PremiumGuild")
+const TicketSetup = require("../../Structures/Schemas/TicketSetup");
 
 module.exports = {
     name: "ready",
@@ -152,7 +154,7 @@ module.exports = {
                                 text: "Page is loading..."
                             },
                             premium: {
-                                title: "Want more from zeenbot?",
+                                title: "Want more from zeenbot? ⭐",
                                 description: "Check out premium features below!",
                                 buttonText: "Get Premium",
                                 button: {
@@ -868,7 +870,7 @@ module.exports = {
                         },
                         {
                             optionId: "verifymsg",
-                            optionName: "Verification Message",
+                            optionName: "Verification Message ⭐",
                             optionDescription: "Set message that should be sent in the embed",
                             optionType: DBD.formTypes.input("Please verify yourself by clicking the button below", 1, 200, false),
                             getActualSet: async ({ guild }) => {
@@ -1833,7 +1835,7 @@ module.exports = {
                 // Voice Hubs
                 {
                     categoryId: "voicehubs",
-                    categoryName: "Voice Hubs",
+                    categoryName: "Voice Hubs ⭐",
                     categoryDescription: "Setup the voice Hub for the server",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955138413990028/voice.png',
                     categoryOptionsList: [
@@ -1871,11 +1873,17 @@ module.exports = {
 
                                 return
 
-                            }
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
+                            },
                         },
                         {
                             optionId: "hublimit",
-                            optionName: "Hub User Limit",
+                            optionName: "Hub User Limit ⭐",
                             optionDescription: "Set the max user size for the voice hub",
                             optionType: DBD.formTypes.input("3", 1, 2, false, false),
                             getActualSet: async ({ guild }) => {
@@ -1907,7 +1915,13 @@ module.exports = {
 
                                 return
 
-                            }
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
+                            },
                         }
                     ]
                 },
@@ -1916,9 +1930,83 @@ module.exports = {
                 {
                     categoryId: "tickets",
                     categoryName: "Tickets",
-                    categoryDescription: "Setup the Tickets for the server",
+                    categoryDescription: "Setup the Tickets for the server (You need to refresh the page after setting up the options!)",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955137977786428/tickets.png',
                     categoryOptionsList: [
+                        {
+                            optionId: "ticket",
+                            optionName: "Ticket Status",
+                            optionDescription: "Enable or disable the tickets system",
+                            optionType: DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Status
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.find({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        Guild: guild.id,
+                                        Response: "Our team will contact you shortly. Please describe your issue.",
+                                        PingStaff: false,
+                                        DMTranscript: false,
+                                        Status: newData,
+                                    })
+
+                                    await data.save()
+
+                                    console.log("Ich bin hier falsch")
+
+                                } else {
+
+                                    if (newData === null)  {
+                                        const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                        if (!data) return
+                                        data.Status = newData
+                                        const oldMessageID = data.PanelMessageID
+
+                                        const channelId = data.Channel
+                                        const messageId = data.PanelMessageID
+
+                                        client.channels.fetch(channelId).then(channel => {
+                                            channel.messages.delete(messageId);
+                                        });
+
+                                        await data.save();
+                                        await data.delete();
+                                    } else {
+                                        const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                        await resendTicketPanel(guild, data.Buttons, data.Emojis, data.ChannelID, data.PanelMessageID, data, client)
+
+                                        data.Status = newData
+                                        await data.save()
+                                    }
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "No Data found yet! Please set the tickets settings first!"}
+                                if (!data.Channel) return {allowed: false, errorMessage: "You are missing the panel channel!"}
+                                if (!data.Handlers) return {allowed: false, errorMessage: "You are missing the handlers role!"}
+                                if (!data.Category) return {allowed: false, errorMessage: "You are missing the ticket category!"}
+                                if (!data.Transcripts) return {allowed: false, errorMessage: "You are missing the transcripts channel!"}
+                                if (!data.Button1) return {allowed: false, errorMessage: "You are missing the button1 label!"}
+                                return {
+                                    allowed: true,
+                                    errorMessage: null
+                                };
+                            },
+                        },
                         {
                             optionId: "panel",
                             optionName: "Panel Channel",
@@ -1956,13 +2044,13 @@ module.exports = {
                             }
                         },
                         {
-                            optionId: "message",
-                            optionName: "Ticket message",
-                            optionDescription: "Set the message to be send when a ticket is being opened (use {member.user.tag} to get the user name)",
-                            optionType: DBD.formTypes.input("Our team will contact you shortly. Please describe your issue.", 1, 200, false, false),
+                            optionId: "description",
+                            optionName: "Panel Text ⭐",
+                            optionDescription: "Set the text to be shown in your Ticket Panel",
+                            optionType: DBD.formTypes.input("Click one of the buttons below to open a ticket", 1, 512, false, false),
                             getActualSet: async ({ guild }) => {
                                 let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Response
+                                if (data) return data.Description
                                 else return null
                             },
                             setNew: async ({ guild, newData }) => {
@@ -1975,14 +2063,92 @@ module.exports = {
 
                                     data = new TicketSetupDB({
                                         GuildID: guild.id,
-                                        Response: newData,
+                                        Description: newData,
                                     })
 
                                     await data.save()
 
                                 } else {
 
-                                    data.Response = newData
+                                    data.Description = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                            },
+                        },
+                        {
+                            optionId: "category",
+                            optionName: "Tickets category",
+                            optionDescription: "Set the channel category for the tickets",
+                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildCategory]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Category
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Category: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Category = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "handlers",
+                            optionName: "Role for Ticket Support",
+                            optionDescription: "Set the Ticket support role for the tickets",
+                            optionType: DBD.formTypes.rolesSelect(false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Handlers
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Handlers: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Handlers = newData
                                     await data.save()
 
                                 }
@@ -1993,8 +2159,8 @@ module.exports = {
                         },
                         {
                             optionId: "ticketpingstaff",
-                            optionName: "Ping Staff",
-                            optionDescription: "Set if the bot should ping the Ticket Handlers when a ticket is opened",
+                            optionName: "Ping Support Role",
+                            optionDescription: "Set if the bot should ping the Ticket support role when a ticket is opened",
                             optionType: DBD.formTypes.switch(false),
                             getActualSet: async ({ guild }) => {
                                 let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
@@ -2028,13 +2194,13 @@ module.exports = {
                             }
                         },
                         {
-                            optionId: "category",
-                            optionName: "Panel category",
-                            optionDescription: "Set the channel category for the tickets",
-                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildCategory]),
+                            optionId: "ticketname",
+                            optionName: "Ticket name ⭐",
+                            optionDescription: "Set the name of the ticket. Ticket will be called {ticketname}-XXXXX",
+                            optionType: DBD.formTypes.input("ticket", 1, 200, false, false),
                             getActualSet: async ({ guild }) => {
                                 let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Category
+                                if (data) return data.TicketName
                                 else return null
                             },
                             setNew: async ({ guild, newData }) => {
@@ -2047,21 +2213,111 @@ module.exports = {
 
                                     data = new TicketSetupDB({
                                         GuildID: guild.id,
-                                        Category: newData,
+                                        TicketName: newData
                                     })
 
                                     await data.save()
 
                                 } else {
 
-                                    data.Category = newData
+                                    data.TicketName = newData
                                     await data.save()
 
                                 }
 
                                 return
 
-                            }
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                            },
+                        },
+                        {
+                            optionId: "message",
+                            optionName: "Ticket message ⭐",
+                            optionDescription: "Set the message to be send when a ticket is being opened (use {member.user.tag} to get the user name)",
+                            optionType: DBD.formTypes.input("Our team will contact you shortly. Please describe your issue.", 1, 200, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Response
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Response: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Response = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                            },
+                        },
+                        {
+                            optionId: "ticketdmtranscript",
+                            optionName: "DM Transcript to user ⭐",
+                            optionDescription: "Set if the bot should send the transcript to the user when the transcript is being created",
+                            optionType: DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.DMTranscripts
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        DMTranscripts: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.DMTranscripts = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                            },
                         },
                         {
                             optionId: "transscript",
@@ -2100,121 +2356,13 @@ module.exports = {
                             }
                         },
                         {
-                            optionId: "handlers",
-                            optionName: "Ticket Support Role",
-                            optionDescription: "Set the Ticket support role for the tickets",
-                            optionType: DBD.formTypes.rolesSelect(false, false),
-                            getActualSet: async ({ guild }) => {
-                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Handlers
-                                else return null
-                            },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!data) {
-
-                                    data = new TicketSetupDB({
-                                        GuildID: guild.id,
-                                        Handlers: newData,
-                                    })
-
-                                    await data.save()
-
-                                } else {
-
-                                    data.Handlers = newData
-                                    await data.save()
-
-                                }
-
-                                return
-
-                            }
-                        },
-                        {
-                            optionId: "everyone",
-                            optionName: "Everyone Role",
-                            optionDescription: "Set the everyone role for the tickets",
-                            optionType: DBD.formTypes.input("ROLE ID", 18, 20, false, true),
-                            getActualSet: async ({ guild }) => {
-                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Everyone
-                                else return null
-                            },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!data) {
-
-                                    data = new TicketSetupDB({
-                                        GuildID: guild.id,
-                                        Everyone: newData,
-                                    })
-
-                                    await data.save()
-
-                                } else {
-
-                                    data.Everyone = newData
-                                    await data.save()
-
-                                }
-
-                                return
-
-                            }
-                        },
-                        {
-                            optionId: "description",
-                            optionName: "Description",
-                            optionDescription: "Set the text to be shown in your Ticket",
-                            optionType: DBD.formTypes.input("Click one of the buttons below to open a ticket", 1, 512, false, true),
-                            getActualSet: async ({ guild }) => {
-                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Description
-                                else return null
-                            },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!data) {
-
-                                    data = new TicketSetupDB({
-                                        GuildID: guild.id,
-                                        Description: newData,
-                                    })
-
-                                    await data.save()
-
-                                } else {
-
-                                    data.Description = newData
-                                    await data.save()
-
-                                }
-
-                                return
-
-                            }
-                        },
-                        {
-                            optionId: "buttons",
+                            optionId: "button1",
                             optionName: "Buttons",
-                            optionDescription: "Set the text to be shown the buttons",
-                            optionType: DBD.formTypes.input("[ \"Click me\", \"Mee too!\", \"Well me too!\", \"I dont wanna be missed!\" ]", 1, 512, false, true),
+                            optionDescription: "Set the text and to be shown the first button.",
+                            optionType: DBD.formTypes.input("Support", 1, 512, false, true),
                             getActualSet: async ({ guild }) => {
                                 let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Buttons
+                                if (data) return data.Button1
                                 else return null
                             },
                             setNew: async ({ guild, newData }) => {
@@ -2227,22 +2375,156 @@ module.exports = {
 
                                     data = new TicketSetupDB({
                                         GuildID: guild.id,
-                                        Buttons: newData,
+                                        Button1: newData,
+                                        Buttons: [data.Button1],
+                                    })
+
+                                    await data.save()
+
+                                } else {
+                                    data.Button1 = newData
+                                    data.Buttons[0] = newData
+
+
+                                    await resendTicketPanel(guild, data.Buttons, data.ChannelID, data.MessageID, data, client)
+
+                                    await data.save()
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "button2",
+                            optionName: "",
+                            optionDescription: "Set the text and to be shown the second button.",
+                            optionType: DBD.formTypes.input("Support,🔨", 1, 512, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Button2
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    const secondButton = newData.split(",")
+                                    const emoji2 = secondButton[1]
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Button2: newData,
+                                        Buttons: [secondButton],
+                                        Emojis: [emoji2]
                                     })
 
                                     await data.save()
 
                                 } else {
 
-                                    data.Description = newData
+                                    const secondButton = newData.split(",")
+                                    const emoji2 = secondButton[1]
+
+                                    data.Button2 = newData
+                                    data.Buttons[1] = secondButton[0]
+                                    data.Emojis[1] = emoji2
+                                    await data.save()
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "button3",
+                            optionName: "",
+                            optionDescription: "Set the text and to be shown the third button.",
+                            optionType: DBD.formTypes.input("Support,🔨", 1, 512, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Button2
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Button3: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Button3 = newData
                                     await data.save()
 
                                 }
 
                                 return
 
-                            }
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                            },
+                        },
+                        {
+                            optionId: "button4",
+                            optionName: "",
+                            optionDescription: "Set the text and to be shown the fourth button.",
+                            optionType: DBD.formTypes.input("Support,🔨", 1, 512, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Button4
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Button4: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Button4 = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.Guild) return {allowed: true }
+                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                            },
                         }
+
                     ]
                 },
 
@@ -2269,5 +2551,214 @@ function CommandPush(filteredArray, CategoryArray) {
         CategoryArray.push(cmdObject)
 
     })
+
+}
+
+async function resendTicketPanel(guild, Buttons, ChannelID, MessageID, data, client) {
+
+    let numberButtons = 1;
+    console.log("Number of buttons set : " + numberButtons)
+
+    console.log("Set Button 1 to " + data.Button1)
+    if (data.Button2) {
+        numberButtons = 2;
+        console.log("Set Button 2 to " + data.Button2)
+    }
+    if (data.Button3) {
+        numberButtons = 3;
+    }
+    if (data.Button4) {
+        numberButtons = 4;
+    }
+
+    try {
+        let firstbutton = null
+        let secondbutton = null
+        let thirdbutton = null
+        let fourthbutton = null
+
+        console.log("Setup emoji and button vars")
+
+        switch (numberButtons) {
+            case 1:
+                console.log("Only 1 Button")
+
+                await TicketSetupDB.findOneAndUpdate(
+                    { GuildID: guild.id },
+                    {
+                        Channel: data.Channel,
+                        Category: data.Category,
+                        Transcripts: data.Transcripts,
+                        Handlers: data.Handlers,
+                        Everyone: data.Everyone,
+                        Description: data.Description,
+                        Button1: data.Button1,
+                        Buttons: [data.Button1],
+                        PingStaff: data.PingStaff,
+                        Response: data.Response,
+                    },
+                    {
+                        new: true,
+                        upsert: true,
+                    }
+                );
+                break;
+            case 2:
+                console.log("Only 2 Button")
+
+                await TicketSetupDB.findOneAndUpdate(
+                    { GuildID: guild.id },
+                    {
+                        Channel: data.Channel,
+                        Category: data.Category,
+                        Transcripts: data.Transcripts,
+                        Handlers: data.Handlers,
+                        Everyone: data.Everyone,
+                        Description: data.Description,
+                        Button1: data.Button1,
+                        Button2: data.Button2,
+                        Buttons: [data.Button1, data.Button2],
+                        PingStaff: data.PingStaff,
+                        Response: data.Response,
+                    },
+                    {
+                        new: true,
+                        upsert: true,
+                    }
+                );
+
+                break;
+            case 3:
+                await TicketSetupDB.findOneAndUpdate(
+                    { GuildID: guild.id },
+                    {
+                        Channel: data.Channel,
+                        Category: data.Category,
+                        Transcripts: data.Transcripts,
+                        Handlers: data.Handlers,
+                        Everyone: data.Everyone,
+                        Description: data.Description,
+                        Button1: data.Button1,
+                        Button2: data.Button2,
+                        Button3: data.Button3,
+                        Buttons: [firstbutton, secondbutton, thirdbutton],
+                        PingStaff: data.PingStaff,
+                        Response: data.Response,
+                    },
+                    {
+                        new: true,
+                        upsert: true,
+                    }
+                );
+
+                break;
+            case 4:
+                firstbutton = button1.split(",");
+                secondbutton = button2.split(",");
+                thirdbutton = button3.split(",");
+                fourthbutton = button4.split(",");
+
+                await TicketSetupDB.findOneAndUpdate(
+                    { GuildID: guild.id },
+                    {
+                        Channel: data.Channel,
+                        Category: data.Category,
+                        Transcripts: data.Transcripts,
+                        Handlers: data.Handlers,
+                        Everyone: data.Everyone,
+                        Description: data.Description,
+                        Button1: data.Button1,
+                        Button2: data.Button2,
+                        Button3: data.Button3,
+                        Button4: data.Button4,
+                        Buttons: [firstbutton, secondbutton, thirdbutton, fourthbutton],
+                        PingStaff: data.PingStaff,
+                        Response: data.Response,
+                    },
+                    {
+                        new: true,
+                        upsert: true,
+                    }
+                );
+
+                break;
+
+        }
+
+        const button = new ActionRowBuilder()
+
+        switch (numberButtons) {
+            case 1:
+                console.log("Only 1 Button ActionRow")
+                console.log("Button 1: " + data.Button1)
+                button.setComponents(
+                    new ButtonBuilder().setCustomId(data.Button1).setLabel(data.Button1).setStyle(ButtonStyle.Danger).setEmoji('✉️'),
+                )
+                break;
+            case 2:
+                console.log("Only 2 Button ActionRow")
+                console.log("Button 1: " + firstbutton)
+                console.log("Button 2: " + secondbutton)
+                button.setComponents(
+                    new ButtonBuilder().setCustomId(data.Button1).setLabel(data.Button1).setStyle(ButtonStyle.Danger).setEmoji('✉️'),
+                    new ButtonBuilder().setCustomId(data.Button2).setLabel(data.Button2).setStyle(ButtonStyle.Secondary).setEmoji('✉️'),
+                )
+                break;
+            case 3:
+                button.setComponents(
+                    new ButtonBuilder().setCustomId(firstbutton).setLabel(firstbutton).setStyle(ButtonStyle.Danger).setEmoji(emoji1),
+                    new ButtonBuilder().setCustomId(secondbutton).setLabel(secondbutton).setStyle(ButtonStyle.Secondary).setEmoji(emoji2),
+                    new ButtonBuilder().setCustomId(thirdbutton).setLabel(thirdbutton).setStyle(ButtonStyle.Primary).setEmoji(emoji3),
+                )
+                break;
+            case 4:
+                button.setComponents(
+                    new ButtonBuilder().setCustomId(firstbutton).setLabel(firstbutton).setStyle(ButtonStyle.Danger).setEmoji(emoji1),
+                    new ButtonBuilder().setCustomId(secondbutton).setLabel(secondbutton).setStyle(ButtonStyle.Secondary).setEmoji(emoji2),
+                    new ButtonBuilder().setCustomId(thirdbutton).setLabel(thirdbutton).setStyle(ButtonStyle.Primary).setEmoji(emoji3),
+                    new ButtonBuilder().setCustomId(fourthbutton).setLabel(fourthbutton).setStyle(ButtonStyle.Success).setEmoji(emoji4),
+                )
+                break;
+        }
+
+        console.log("Creating Embed")
+        const embed = new EmbedBuilder()
+            .setDescription(data.Description)
+
+        console.log("sending Embed")
+
+        const channel = client.channels.cache.get(data.Channel)
+
+        let message = await channel.send({
+            embeds: ([embed]),
+            components: [
+                button
+            ]
+        });
+
+        const messageID = message.id
+
+        if (data.PanelMessageID) {
+            console.log("trying to delete the old message")
+            const oldMessageID = data.PanelMessageID
+
+            const channelId = data.Channel
+            const messageId = oldMessageID
+
+            client.channels.fetch(channelId).then(channel => {
+                channel.messages.delete(messageId);
+            });
+
+            data.PanelMessageID = messageID;
+        }
+
+        data.PanelMessageID = messageID;
+
+    } catch (err) {
+        console.log(err)
+        return { error: "Something went wrong!" }
+    }
+    console.log("Embed Send!")
+
 
 }
