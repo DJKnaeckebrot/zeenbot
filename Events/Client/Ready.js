@@ -23,7 +23,7 @@ module.exports = {
 
             user.setActivity({
                 name: `zeenbot.de | ${client.guilds.cache.size} servers`,
-                type: 3,
+                type: 5,
             })
 
         }, ms("5s"))
