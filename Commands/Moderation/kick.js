@@ -80,7 +80,7 @@ module.exports = {
 
                 case "kick-yes": {
 
-                    // member.kick({ reason })
+                    member.kick({ reason })
 
                     interaction.editReply({
                         embeds: [
