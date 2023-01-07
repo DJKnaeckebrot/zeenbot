@@ -1260,6 +1260,7 @@ module.exports = {
                     categoryName: "Tickets",
                     categoryDescription: "Setup the Tickets for the server (You need to refresh the page after setting up the options!)",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955137977786428/tickets.png',
+                    refreshOnSave: true,
                     categoryOptionsList: [
                         {
                             optionId: "ticket",
@@ -1313,7 +1314,11 @@ module.exports = {
                                     } else {
                                         const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
 
-                                        await resendTicketPanel(guild, data.Buttons, data.Emojis, data.Channel, data.PanelMessageID, data, client)
+                                        console.log("Start setting up tickets!")
+
+                                        await resendTicketPanel(guild, data, client)
+
+                                        console.log("Send resend request to resend function!")
 
                                         data.Status = newData
                                         await data.save()
@@ -1353,31 +1358,33 @@ module.exports = {
 
                                 if (!newData) newData = null
 
-                                if (newData === null)  {
-                                    const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                    if (!data) return
+                                if (!data) {
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Channel: newData
+                                    })
 
-                                    const oldChannelID = data.Channel
-                                    data.Channel = newData
-
-                                    const oldMessageID = data.PanelMessageID
-
-                                    const channelId = data.Channel
-                                    const messageId = data.PanelMessageID
-
-                                    client.channels.fetch(oldChannelID).then(channel => {
-                                        channel.messages.delete(messageId);
-                                    });
-
-                                    await data.save();
-                                    await data.delete();
-                                } else {
-                                    const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-
-                                    await resendTicketPanel(guild, data.Buttons, data.Emojis, data.Channel, data.PanelMessageID, data, client)
-
-                                    data.Channel = newData
                                     await data.save()
+
+                                }
+
+                                if (newData === null)  {
+                                    return { error: "You cant remove the Panel Channel!" }
+                                } else {
+                                    console.log("Change Channel")
+
+                                    if (data.Status === true) {
+                                        await resendTicketPanel(guild, data, client)
+                                    }
+
+                                    console.log("Set new channel to : " + newData)
+
+                                    data.Channel = newData
+
+                                    console.log("Starting Save : " + newData)
+                                    await data.save()
+
+                                    console.log("Saved channel to : " + data.Channel)
                                 }
 
                                 return
@@ -1400,25 +1407,29 @@ module.exports = {
 
                                 if (!newData) newData = null
 
+                                if (!data) {
+                                    data = new TicketSetupDB({
+                                        GuildID: guild.id,
+                                        Description: newData
+                                    })
+
+                                    await data.save()
+
+                                }
+
                                 if (newData === null)  {
-                                    const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                    if (!data) return
-                                    data.Description = newData
-                                    const oldMessageID = data.PanelMessageID
+                                    data.Description = "Click one of the buttons below to open a ticket"
+                                    await data.save()
 
-                                    const channelId = data.Channel
-                                    const messageId = data.PanelMessageID
-
-                                    client.channels.fetch(channelId).then(channel => {
-                                        channel.messages.delete(messageId);
-                                    });
-
-                                    await data.save();
-                                    await data.delete();
+                                    if (data.Status === true) {
+                                        await resendTicketPanel(guild, data, client)
+                                    }
                                 } else {
                                     const data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
 
-                                    await resendTicketPanel(guild, data.Buttons, data.Emojis, data.Channel, data.PanelMessageID, data, client)
+                                    if (data.Status === true) {
+                                        await resendTicketPanel(guild, data, client)
+                                    }
 
                                     data.Description = newData
                                     await data.save()
@@ -1461,6 +1472,10 @@ module.exports = {
 
                                 } else {
 
+                                    if (newData === null)  {
+                                        return { error: "You cant remove the Ticket Category!" }
+                                    }
+
                                     data.Category = newData
                                     await data.save()
 
@@ -1496,6 +1511,10 @@ module.exports = {
                                     await data.save()
 
                                 } else {
+
+                                    if (newData === null) {
+                                        return { error: "You cant remove the Ticket Support role!" }
+                                    }
 
                                     data.Handlers = newData
                                     await data.save()
@@ -1611,8 +1630,12 @@ module.exports = {
 
                                 } else {
 
-                                    data.Response = newData
-                                    await data.save()
+                                    if (newData === null) {
+                                        data.Description = "Our team will contact you shortly. Please describe your issue."
+                                    } else {
+                                        data.Response = newData
+                                        await data.save()
+                                    }
 
                                 }
 
@@ -1731,10 +1754,15 @@ module.exports = {
                                     await data.save()
 
                                 } else {
+
+                                    let data = await TicketSetupDB.findOne({ GuildID: guild.id }).catch(err => { })
+
                                     data.Button1 = newData
                                     data.Buttons[0] = newData
 
-                                    await resendTicketPanel(guild, data.Buttons, data.Channel, data.PanelMessageID, data, client)
+                                    if (data.Button2) {
+                                        await resendTicketPanel(guild, data.Buttons, data.Channel, data.PanelMessageID, data, client)
+                                    }
 
                                     await data.save()
                                 }
@@ -2532,24 +2560,31 @@ function CommandPush(filteredArray, CategoryArray) {
 
 }
 
-async function resendTicketPanel(guild, Buttons, ChannelID, MessageID, data, client) {
+async function resendTicketPanel(guild, data, client) {
+
+    console.log("Starting resend process")
 
     let numberButtons = 1;
     console.log("Number of buttons set : " + numberButtons)
 
+    console.log("Dataset received by the function : " + data)
+
     console.log("Set Button 1 to " + data.Button1)
+
     if (data.Button2) {
         numberButtons = 2;
         console.log("Set Button 2 to " + data.Button2)
     }
     if (data.Button3) {
         numberButtons = 3;
+        console.log("Set Button 3 to " + data.Button3)
     }
     if (data.Button4) {
         numberButtons = 4;
+        console.log("Set Button 4 to " + data.Button4)
     }
 
-    const color = data.TicketEmbedColor
+    console.log("Set numbers of buttons. Starting setting vars.")
 
     try {
         let firstbutton = null
@@ -2699,8 +2734,8 @@ async function resendTicketPanel(guild, Buttons, ChannelID, MessageID, data, cli
         console.log("Creating Embed")
         const embed = new EmbedBuilder()
             .setDescription(data.Description)
-            .setColor(color)
-            .setFooter({ text: `Ticket System | ${guild.name}`, iconURL: guild.iconURL})
+            .setColor("Blue")
+            .setFooter({ text: `Ticket System | ${guild.name}`, iconURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png"})
 
         console.log("sending Embed")
 
