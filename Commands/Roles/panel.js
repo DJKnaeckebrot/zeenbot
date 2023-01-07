@@ -15,7 +15,7 @@ module.exports = {
         const { options, guildId, guild, channel } = interaction;
 
         try {
-            const data = await rrSchema.findOne({ Guild: guildId });
+            const data = await rrSchema.findOne({ GuildID: guildId });
 
             if (!data.roles.length > 0)
                 return interaction.reply({ content: "This server does not have any data.", ephemeral: true });

@@ -42,7 +42,7 @@ module.exports = {
             if (role.position >= member.roles.highest.position)
                 return interaction.reply({ content: "I don't have permissions for that.", ephemeral: true });
 
-            const data = await rrSchema.findOne({ Guild: guildId });
+            const data = await rrSchema.findOne({ GuildID: guildId });
 
             const newRole = {
                 roleId: role.id,
@@ -62,7 +62,7 @@ module.exports = {
                 await data.save();
             } else {
                 await rrSchema.create({
-                    Guild: guildId,
+                    GuildID: guildId,
                     roles: newRole,
                 });
             }
