@@ -90,7 +90,7 @@ module.exports = {
                 const replacedResponse = responseText.replace(/{member.user.tag}/g, member.user.tag)
 
                 const embed = new EmbedBuilder()
-                    .setTitle(`${guild.name} - ${member.user.tag}'s Ticket`)
+                    .setTitle(`${guild.name} - ${member.user.tag}'s Ticket | Ticket : ${customId}`)
                     .setColor(color)
                     .setDescription(replacedResponse)
                     .setFooter({ text: `${ticketId}`, iconURL: member.displayAvatarURL({ dynamic: true }) })
