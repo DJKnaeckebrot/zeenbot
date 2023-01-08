@@ -7,6 +7,7 @@ const WelcomeDB = require("../../Structures/Schemas/Welcome")
 const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
 const LogsSwitchDB = require("../../Structures/Schemas/GeneralLogs")
 const LevelDB = require("../../Structures/Schemas/Level")
+const LevelUpDB = require("../../Structures/Schemas/LevelUpChannel")
 const voiceDB = require("../../Structures/Schemas/VoiceSystem")
 const TicketDB = require("../../Structures/Schemas/Ticket")
 const TicketSetupDB = require("../../Structures/Schemas/TicketSetup")
@@ -582,6 +583,7 @@ module.exports = {
                     categoryName: "Verification Settings",
                     categoryDescription: "Setup the verification settings for the bot",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
+                    refreshOnSave: true,
                     categoryOptionsList: [
                         {
                             optionId: "verify",
@@ -2461,19 +2463,19 @@ module.exports = {
                             optionDescription: "Set the channel for the level up notifications",
                             optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
                             getActualSet: async ({ guild }) => {
-                                let data = await LevelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await LevelUpDB.findOne({ Guild: guild.id }).catch(err => { })
                                 if (data) return data.Channel
                                 else return null
                             },
                             setNew: async ({ guild, newData }) => {
 
-                                let data = await LevelDB.find({ Guild: guild.id }).catch(err => { })
+                                let data = await LevelUpDB.find({ Guild: guild.id }).catch(err => { })
 
                                 if (!newData) newData = null
 
                                 if (!data) {
 
-                                    data = new LevelDB({
+                                    data = new LevelUpDB({
                                         Guild: guild.id,
                                         Channel: newData,
                                     })
@@ -2482,11 +2484,8 @@ module.exports = {
 
                                 } else {
 
-                                    for (const d of data) {
-                                        d.Channel = newData
-                                        await d.save()
-                                    }
-
+                                    data.Channel = newData
+                                    await data.save()
                                 }
 
                                 return
