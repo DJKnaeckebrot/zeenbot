@@ -28,6 +28,8 @@ module.exports = {
 
         }, ms("5s"))
 
+        require('../../Structures/Handlers/Premium')(client)
+
         if (!mongodbURL) return
 
         mongoose.connect(mongodbURL, {

@@ -19,6 +19,7 @@ const client = new Client({
 
 client.color = "Blue"
 client.commands = new Collection()
+client.userSettings = new Collection();
 
 const { DiscordTogether } = require("discord-together")
 client.discordTogether = new DiscordTogether(client)
@@ -32,6 +33,8 @@ client.player = new Manager({
 
     }
 })
+
+client.userSettings = new Collection();
 
 process.on("unhandledRejection", (reason, p) => {
     const ChannelID = "1060478836728406036";
@@ -54,7 +57,7 @@ process.on("unhandledRejection", (reason, p) => {
 
 client.on("raw", (d) => client.player.updateVoiceState(d))
 
-const Handlers = ["Events", "Commands", "EventStack", "Errors", "Player"]
+const Handlers = ["Events", "Commands", "EventStack", "Errors", "Player", "Premium"]
     client.voiceGenerator = new Collection();
 
 Handlers.forEach(handler => {

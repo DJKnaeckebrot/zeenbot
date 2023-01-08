@@ -1,8 +1,9 @@
 const { Client, ChatInputCommandInteraction, EmbedBuilder} = require("discord.js")
-const VoucherDB = require("../../Structures/Schemas/Voucher")
-const PremiumGuildDB = require("../../Structures/Schemas/PremiumGuild")
-const { generate } = require("voucher-code-generator")
+const moment = require("moment");
+const schema = require("../../Structures/Schemas/PremiumVoucher");
+const User = require("../../Structures/Schemas/Premium");
 const EditReply = require("../../Systems/EditReply")
+const TicketSetupDB = require("../../Structures/Schemas/TicketSetup");
 
 module.exports = {
     name: "redeem",
@@ -10,8 +11,8 @@ module.exports = {
     category: "Utility",
     options: [
         {
-            name: "voucher",
-            description: "Enter your voucher",
+            name: "code",
+            description: "Enter your premium code",
             type: 3,
             required: true
         }
@@ -20,53 +21,75 @@ module.exports = {
     /**
      * @param {Client} client
      * @param {ChatInputCommandInteraction} interaction
+     * @param {String[]} args
      */
-    async execute(interaction, client) {
+    async execute(interaction, client, args) {
 
-        await interaction.deferReply({ ephemeral: true })
+        const { guild } = interaction
 
-        const { guild, options, channel } = interaction
+        // Check if the user with a unique ID is in our database.
+        let user = await User.findOne({
+            Id: guild.id, // if you are using slash commands, swap message with interaction.
+        });
 
-        const Voucher = options.getString("voucher")
+        await interaction.deferReply({ ephemeral: false })
 
-        const VoucherData = await VoucherDB.findOne({ ThirtyDay: Voucher }).catch(err => { })
-        if (!VoucherData) return EditReply(interaction, "❌", `Not a valid coupon!`)
+        // Check Users input for a valid code. Like `!redeem ABCD-EFGH-IJKL`
+        let code = interaction.options.getString("code");
 
-        const code = generate({
-            length: 8,
-            count: 1
-        })
+        // Return an error if the User does not include any Premium Code
+        if (!code) {
+            EditReply(interaction, "❌", `**Please specify the code you want to redeem!**`)
+        }
 
-        const generated = code[0]
+        // If the user is already a premium user, we dont want to save that so we return it.
+        if (user && user.isPremium) {
+            return interaction.followUp(`**> You already are a premium server**`);
+        }
 
-        VoucherData.ThirtyDay = generated
-        await VoucherData.save()
+        // Check if the code is valid within the database
+        const premium = await schema.findOne({
+            code: code.toUpperCase(),
+        });
 
-        let Data = await PremiumGuildDB.findOne({ Guild: guild.id }).catch(err => { })
-        if (Data) return EditReply(interaction, "❌", `This guild is already a premium guild!`)
+        if (!user) {
+            user = new User({
+                Id: guild.id,
+                isPremium: false,
+            })
 
-        Data = new PremiumGuildDB({
-            Guild: guild.id
-        })
+            await user.save()
+        }
 
-        await Data.save()
+        user = await User.findOne({ Id: guild.id })
 
-        EditReply(interaction, "✅", `${guild.name} is now a premium guild`)
+        // Set the expire date for the premium code
+        if (premium) {
+            const expires = moment(premium.expiresAt).format(
+                "dddd, MMMM Do YYYY HH:mm:ss"
+            );
 
-        const premiumEmbed = new EmbedBuilder()
-            .setTitle("Thank you!")
-            .setColor(client.color)
-            .setDescription(`Thank you for buying premium! \n You now have access to all the premium commands!`)
-            .setTimestamp()
-            .setFooter({ text: `zeenbot`, iconURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png" })
-            .addFields(
-                { name: "Premium Commands", value: "You now can use the following commands:"},
-                { name: "Ticket System", value: "You can use /ticketsetup to setup the ticket system!", inline: true },
-                { name: "Giveaways", value: "You can now use /giveaway to use the giveaway system!", inline: true }
-            )
+            // Once the code is expired, we delete it from the database and from the users profile
+            user.isPremium = true;
+            user.premium.redeemedBy.push(interaction.user);
+            user.premium.redeemedAt = Date.now();
+            user.premium.expiresAt = premium.expiresAt;
+            user.premium.plan = premium.plan;
 
+            // Save the User within the Database
+            user = await user.save({ new: true }).catch(() => {});
 
-        channel.send({ embeds: [premiumEmbed] })
+            client.userSettings.set(guild.id, user);
+
+            await premium.deleteOne().catch(() => {});
+
+            // Send a success message once redeemed
+            EditReply(interaction, "✅", `**> Successfully redeemed your premium code! Expires at: ${expires}**`);
+
+            // Error message if the code is not valid.
+        } else {
+            EditReply(interaction, "❌", `**> Invalid code! Please try again using valid one!**`);
+        }
 
     }
 }
