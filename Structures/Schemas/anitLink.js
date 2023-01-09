@@ -3,8 +3,7 @@ const { model, Schema } = require("mongoose");
 module.exports = model(
     "Antilink",
     new Schema({
-        Guild: { type: String, require: true },
-        logs: { type: Boolean, default: false },
+        GuildID: { type: String, require: true },
         ignoredChannels: Array
     })
 );
