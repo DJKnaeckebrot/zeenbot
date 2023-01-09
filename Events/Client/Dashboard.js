@@ -18,6 +18,8 @@ const premiumDB = require("../../Structures/Schemas/PremiumGuild")
 const premiumServerDB = require("../../Structures/Schemas/Premium")
 const TicketSetup = require("../../Structures/Schemas/TicketSetup");
 const reactionRolesDB = require("../../Structures/Schemas/ReactionRoles")
+const featuresDB = require("../../Structures/Schemas/Features")
+const channelsDB = require("../../Structures/Schemas/Channels")
 
 module.exports = {
     name: "ready",
@@ -581,6 +583,98 @@ module.exports = {
 
                             }
                         },
+                    ]
+                },
+
+                // Suggestions
+                {
+                    categoryId: "suggestions",
+                    categoryName: "Suggestions",
+                    categoryDescription: "Setup the suggestions settings for the bot",
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
+                    refreshOnSave: true,
+                    categoryOptionsList: [
+                        {
+                            optionId: "suggestionstatus",
+                            optionName: "Suggestions Status",
+                            optionDescription: "Enable or disable the suggestions feature",
+                            optionType:  DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Suggestions
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!feature) {
+
+                                    if (!channel.Suggestions) {
+                                        return { error: true, errorMessage: "You need to set the suggestions channel first" }
+                                    } else {
+                                        feature = new featuresDB({
+                                        Guild: guild.id,
+                                        Suggestions: newData,
+                                        })
+
+                                        await feature.save()
+                                    }
+
+                                } else {
+
+                                    feature.Suggestions = newData
+                                    await feature.save()
+
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({ guild,user }) => {
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!channel) return { error: true, errorMessage: "No data found! have you set up the channel yet?" }
+
+                                if (!channel.Suggestions) {
+                                    return { allowed: false, errorMessage: "You need to set the suggestions channel first" }
+                                }
+                                return { allowed: true }
+                            }
+                        },
+                        {
+                            optionId: "suggestionch",
+                            optionName: "Suggestions Channel",
+                            optionDescription: "Set or disable the suggestions channel",
+                            optionType:  DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.Suggestions
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!channel) {
+                                    channel = new channelsDB({
+                                        GuildID: guild.id,
+                                        Suggestions: newData,
+                                    })
+
+                                    await channel.save()
+                                } else {
+                                    channel.Suggestions = newData
+                                    await channel.save()
+                                }
+                            }
+                        }
                     ]
                 },
 
