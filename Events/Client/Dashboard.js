@@ -1,4 +1,4 @@
-const { Client, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder} = require("discord.js")
+const { Client, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, StringSelectMenuBuilder} = require("discord.js")
 const config = require('./config.json');
 const SoftUI = require('dbd-soft-ui');
 let DBD = require('discord-dashboard');
@@ -15,7 +15,9 @@ const antiLinkDB = require("../../Structures/Schemas/anitLink")
 const reportChannelDB = require("../../Structures/Schemas/ReportChannel")
 const verificationDB = require("../../Structures/Schemas/Verification")
 const premiumDB = require("../../Structures/Schemas/PremiumGuild")
+const premiumServerDB = require("../../Structures/Schemas/Premium")
 const TicketSetup = require("../../Structures/Schemas/TicketSetup");
+const reactionRolesDB = require("../../Structures/Schemas/ReactionRoles")
 
 module.exports = {
     name: "ready",
@@ -303,7 +305,7 @@ module.exports = {
                 supporteMail: "support@zeenbot.de",
                 icons: {
                     favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
-                    noGuildIcon: "https://cdn.discordapp.com/attachments/1041329286969294858/1058321546197868625/abstract-black-low-poly-wallpaper-preview.jpeg",
+                    noGuildIcon: "https://pnggrid.com/wp-content/uploads/2021/05/Discord-Logo-Circle-1024x1024.png",
                     sidebar: {
                         darkUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png',
                         lightUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
@@ -374,44 +376,44 @@ module.exports = {
                     }
                 },
 
-                commands: [
-                    {
-                        category: "Information",
-                        subTitle: "Information Commands",
-                        aliasesDisabled: false,
-                        list: Information
-                    },
-                    {
-                        category: "Tickets",
-                        subTitle: "Ticket Commands",
-                        aliasesDisabled: false,
-                        list: Tickets
-                    },
-                    {
-                        category: "Giveaways",
-                        subTitle: "Giveaway Commands",
-                        aliasesDisabled: false,
-                        list: Giveaway
-                    },
-                    {
-                        category: "Economy",
-                        subTitle: "Economy Commands",
-                        aliasesDisabled: false,
-                        list: Economy
-                    },
-                    {
-                        category: "Community",
-                        subTitle: "Community Commands",
-                        aliasesDisabled: false,
-                        list: Community
-                    },
-                    {
-                        category: "Moderation",
-                        subTitle: "Moderation Commands",
-                        aliasesDisabled: false,
-                        list: Moderation
-                    },
-                ],
+                    commands: [
+                        {
+                            category: "Information",
+                            subTitle: "Information Commands",
+                            aliasesDisabled: false,
+                            list: Information
+                        },
+                        {
+                            category: "Tickets",
+                            subTitle: "Ticket Commands",
+                            aliasesDisabled: false,
+                            list: Tickets
+                        },
+                        {
+                            category: "Giveaways",
+                            subTitle: "Giveaway Commands",
+                            aliasesDisabled: false,
+                            list: Giveaway
+                        },
+                        {
+                            category: "Economy",
+                            subTitle: "Economy Commands",
+                            aliasesDisabled: false,
+                            list: Economy
+                        },
+                        {
+                            category: "Community",
+                            subTitle: "Community Commands",
+                            aliasesDisabled: false,
+                            list: Community
+                        },
+                        {
+                            category: "Moderation",
+                            subTitle: "Moderation Commands",
+                            aliasesDisabled: false,
+                            list: Moderation
+                        },
+                    ],
 
             }),
             settings: [
@@ -974,6 +976,12 @@ module.exports = {
 
                                 return
 
+                            },
+                            allowedCheck: async ({ guild, user }) => {
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             }
                         },
                     ]
@@ -1441,10 +1449,10 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
-                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                         },
                         {
@@ -1599,10 +1607,10 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
-                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                         },
                         {
@@ -1645,10 +1653,10 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
-                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                         },
                         {
@@ -1687,10 +1695,10 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
-                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                         },
                         {
@@ -1853,10 +1861,10 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
-                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                             themeOptions: { startNewSection: true }
                         },
@@ -1899,10 +1907,10 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
-                                return { allowed: false, errorMessage: "Your server is not premium!" };
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                             themeOptions: { startNewSection: { last: true } }
                         }
@@ -1953,9 +1961,9 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
+                                if (data.isPremium) return {allowed: true }
                                 return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                         },
@@ -1995,9 +2003,9 @@ module.exports = {
 
                             },
                             allowedCheck: async ({guild,user}) => {
-                                let data = await premiumDB.findOne({ Guild: guild.id }).catch(err => { })
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
                                 if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
-                                if (data.Guild) return {allowed: true }
+                                if (data.isPremium) return {allowed: true }
                                 return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
                         }
@@ -2469,7 +2477,7 @@ module.exports = {
                             },
                             setNew: async ({ guild, newData }) => {
 
-                                let data = await LevelUpDB.find({ Guild: guild.id }).catch(err => { })
+                                let data = await LevelUpDB.findOne({ Guild: guild.id }).catch(err => { })
 
                                 if (!newData) newData = null
 
@@ -2770,6 +2778,72 @@ async function resendTicketPanel(guild, data, client) {
         return { error: "Something went wrong!" }
     }
     console.log("Embed Send!")
+}
 
+async function resendReactionPanel (data, guild, user) {
+    if (!data.roles.length > 0)
+        return { error: "You have not setup the reaction roles!" }
 
+    console.log("Roles are there!")
+
+    const panelEmbed = new EmbedBuilder()
+        .setDescription(data.Text)
+        .setColor("Aqua")
+
+    console.log("Embed is set!")
+
+    const options = data.roles.map(x => {
+        console.log("Getting role for mapping : " + x)
+        console.log("Getting for role ID : " + x.roleId)
+        const role = guild.roles.cache.get(x.roleId);
+        console.log("Role is set to : " + role.name)
+        console.log(`Options are set to : Role: ${role.name} RoleID: ${role.id} RoleDesc: ${x.roleDescription} RoleEmoji: ${x.roleEmoji}`)
+        return {
+            label: role.name,
+            value: role.id,
+            description: x.roleDescription,
+            emoji: x.roleEmoji || undefined
+        };
+    });
+
+    console.log("Roles are maped")
+
+    const menuComponents = [
+        new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('reaction-roles')
+                .setMaxValues(options.length)
+                .addOptions(options),
+        ),
+    ];
+
+    console.log("Components are made")
+
+    const channel = guild.channels.cache.get(data.ChannelID)
+
+    console.log("Channel is set to : " + channel)
+
+    let message = channel.send({ embeds: [panelEmbed], components: menuComponents });
+
+    const messageID = message.id
+
+    if (data.MessageID) {
+        console.log("trying to delete the old message")
+        const oldMessageID = data.PanelMessageID
+
+        const channelId = data.Channel
+        const messageId = oldMessageID
+
+        client.channels.fetch(channelId).then(channel => {
+            channel.messages.delete(messageId);
+        });
+
+        console.log("Old message deleted!")
+
+        data.PanelMessageID = messageID;
+    }
+
+    data.PanelMessageID = messageID;
+
+    console.log("Message has been send!")
 }
