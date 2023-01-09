@@ -2,7 +2,7 @@
   "name": "zeenbotv2",
   "version": "1.0.0",
   "description": "",
-  "main": "./Structures/index.js",
+  "main": "./Structures/bot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,6 +16,7 @@
     "canvacord": "^5.4.6",
     "captcha-canvas": "^3.2.1",
     "dbd-soft-ui": "^1.5.52-beta.1",
+    "dbdsoftuishardstats": "^1.1.0",
     "discord-canvas": "^1.5.2",
     "discord-dashboard": "2.3.6",
     "discord-giveaways": "^6.0.1",
