@@ -1,4 +1,5 @@
 const { Client, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const features = require("../../Structures/Schemas/Features");
 const antilinkSchema = require("../../Structures/Schemas/anitLink");
 
 module.exports = {
@@ -14,18 +15,20 @@ module.exports = {
         const guild = msg.guild;
         const channel = msg.channel;
 
-        let requireDB = await antilinkSchema.findOne({ Guild: guild.id });
+        let requireDB = await antilinkSchema.findOne({ GuildID: guild.id });
+        let feature = await features.findOne({ GuildID: guild.id });
         if (!requireDB) return;
 
         const ignoredChannels = requireDB.ignoredChannels;
 
         if (ignoredChannels.includes(channel.id)) {
+            console.log("Ignored channel");
             return
         }
 
-        if (requireDB.logs === false) return;
+        if (feature.AntiLink === false) return;
 
-        if (requireDB.logs === true) {
+        if (feature.AntiLink === true) {
             if (
                 !guild.members.me.permissions.has(
                     PermissionsBitField.Flags.ManageMessages
