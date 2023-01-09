@@ -8,6 +8,7 @@ const {
 } = require("discord.js");
 const channels = require("../../Structures/Schemas/Channels");
 const SuggestDB = require("../../Structures/Schemas/SuggestDB");
+const featuresDB = require("../../Structures/Schemas/Features");
 
 module.exports = {
   name: "suggest",
@@ -54,6 +55,9 @@ module.exports = {
     const { options, guildId, member, user, guild } = interaction;
 
     const data = await channels.findOne({ GuildID: guildId }).catch(err => { })
+    const feature = await featuresDB.findOne({ GuildID: guildId }).catch(err => { })
+
+    if (!feature.Suggestions) return interaction.reply({ content: "Suggestions are not yet set up for this server!", ephemeral: true })
 
     if (!data) return interaction.reply({ content: "This server doesn't have a suggestion channel setup.", ephemeral: true })
 
