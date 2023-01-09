@@ -1,6 +1,7 @@
 const { Client } = require("discord.js")
 const ms = require("ms")
 const mongoose = require("mongoose")
+const DSU = require("dbdsoftuishardstats");
 const mongodbURL = process.env.MONGODBURL
 
 module.exports = {
@@ -22,7 +23,7 @@ module.exports = {
             const ping = ws.ping
 
             user.setActivity({
-                name: `zeenbot.de | ${client.guilds.cache.size} servers`,
+                name: `zeenbot.xyz | ${client.guilds.cache.size} servers`,
                 type: 5,
             })
 
