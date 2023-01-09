@@ -302,11 +302,6 @@ module.exports = {
                         }
                     },
                 },
-                shardspage: {
-                    enabled: true,
-
-                    key: "penis",
-                },
                 websiteName: "zeenbot",
                 colorScheme: "blue",
                 supporteMail: "support@zeenbot.xyz",
@@ -382,6 +377,13 @@ module.exports = {
                         serverUUIDs: []
                     }
                 },
+                sidebar: {
+                    gestures: {
+                        disabled: false,
+                        gestureTimer: 200,
+                        gestureSensitivity: 50,
+                    }
+                },
 
                     commands: [
                         {
@@ -430,7 +432,7 @@ module.exports = {
                     categoryId: "general",
                     categoryName: "General Settings",
                     categoryDescription: "Setup the general settings for the bot",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     categoryOptionsList: [
                         {
                             optionId: "mods",
@@ -519,7 +521,7 @@ module.exports = {
                     categoryId: "antilink",
                     categoryName: "Anti Link",
                     categoryDescription: "Anti Link Settings",
-                    categoryImageURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
+                    categoryImageURL: "https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png",
                     toggleable: true,
                     getActualSet: async ({ guild }) => {
                         const data = await featuresDB.findOne({ GuildID: guild.id });
@@ -545,8 +547,8 @@ module.exports = {
                     categoryOptionsList: [
                         {
                             optionId: "alnch",
-                            optionName: "Anti Link ignored categories",
-                            optionDescription: "Set or reset the categories to be ignored",
+                            optionName: "Anti Link ignored channels",
+                            optionDescription: "Set the channels to be ignored by the Anti Link",
                             optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildText]),
                             getActualSet: async ({ guild }) => {
                                 let data = await antiLinkDB.findOne({ GuildID: guild.id }).catch(err => { })
@@ -588,7 +590,7 @@ module.exports = {
                     categoryId: "suggestions",
                     categoryName: "Suggestions",
                     categoryDescription: "Setup the suggestions settings for the bot",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     refreshOnSave: true,
                     toggleable: true,
                     getActualSet: async ({ guild }) => {
@@ -662,7 +664,7 @@ module.exports = {
                     categoryId: "verification",
                     categoryName: "Verification Settings",
                     categoryDescription: "Setup the verification settings for the bot",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     refreshOnSave: true,
                     categoryOptionsList: [
                         {
@@ -1071,7 +1073,7 @@ module.exports = {
                     categoryId: "welcome",
                     categoryName: "Welcome",
                     categoryDescription: "Setup the Welcome Channel",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429901549600768/welcome.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     categoryOptionsList: [
                         {
                             optionId: "welch",
@@ -1347,7 +1349,7 @@ module.exports = {
                     categoryId: "tickets",
                     categoryName: "Tickets",
                     categoryDescription: "Setup the Tickets for the server (You need to refresh the page after setting up the options!)",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955137977786428/tickets.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     refreshOnSave: true,
                     categoryOptionsList: [
                         {
@@ -2001,7 +2003,7 @@ module.exports = {
                     categoryId: "voicehubs",
                     categoryName: "Voice Hubs ⭐",
                     categoryDescription: "Setup the voice Hub for the server",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1059955138413990028/voice.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107448409858208/zlogo-gold.png',
                     categoryOptionsList: [
                         {
                             optionId: "hub",
@@ -2096,7 +2098,7 @@ module.exports = {
                     categoryId: "logs",
                     categoryName: "Logging System",
                     categoryDescription: "Setup channels for General & Invite Logger",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429900584910948/log.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     categoryOptionsList: [
                         {
                             optionId: "gench",
@@ -2541,7 +2543,7 @@ module.exports = {
                     categoryId: "level",
                     categoryName: "Levels",
                     categoryDescription: "Setup the level system for the bot",
-                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429900173877358/level.png',
+                    categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     categoryOptionsList: [
                         {
                             optionId: "levelchannel",
