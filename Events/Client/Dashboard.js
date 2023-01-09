@@ -425,7 +425,7 @@ module.exports = {
             }),
             settings: [
 
-                // Permissions
+                // General Settings
                 {
                     categoryId: "general",
                     categoryName: "General Settings",
@@ -460,79 +460,6 @@ module.exports = {
                                 } else {
 
                                     data.ID = newData
-                                    await data.save()
-
-                                }
-
-                                return
-
-                            }
-                        },
-                        {
-                            optionId: "anitlink",
-                            optionName: "Antilink",
-                            optionDescription: "Enabled or Disable the Anti Link feature",
-                            optionType:  DBD.formTypes.switch(false),
-                            getActualSet: async ({ guild }) => {
-                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
-                                if (data) return data.logs
-                                else return null
-                            },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!data) {
-
-                                    data = new antiLinkDB({
-                                        Guild: guild.id,
-                                        logs: newData,
-                                    })
-
-                                    await data.save()
-
-                                } else {
-
-                                    data.logs = newData
-                                    await data.save()
-
-                                }
-
-                                return
-
-                            }
-                        },
-                        {
-                            optionId: "alnch",
-                            optionName: "Anti Link ignored channels",
-                            optionDescription: "Set or reset the categories to be ignored",
-                            optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildText]),
-                            getActualSet: async ({ guild }) => {
-                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
-                                if (data) return data.ignoredChannels
-                                else return null
-                            },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await antiLinkDB.findOne({ Guild: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!data) {
-
-                                    data = new antiLinkDB({
-                                        Guild: guild.id,
-                                        logs: false,
-                                        ignoredChannels: newData
-                                    })
-
-                                    await data.save()
-
-                                } else {
-
-                                    data.ignoreChannels = newData
                                     await data.save()
 
                                 }
@@ -586,6 +513,76 @@ module.exports = {
                     ]
                 },
 
+                // Anti Link
+
+                {
+                    categoryId: "antilink",
+                    categoryName: "Anti Link",
+                    categoryDescription: "Anti Link Settings",
+                    categoryImageURL: "https://cdn.discordapp.com/attachments/1041329286969294858/1044984586528096286/zlogo.png",
+                    toggleable: true,
+                    getActualSet: async ({ guild }) => {
+                        const data = await featuresDB.findOne({ GuildID: guild.id });
+                        if (!data) return false;
+                        return data.AntiLink;
+                    },
+                    setNew: async ({ guild, newData }) => {
+                        let feature = await featuresDB.findOne({ GuildID: guild.id });
+
+                        if (!newData) newData = null
+
+                        if (!feature) {
+                            feature = new featuresDB({
+                                GuildID: guild.id,
+                                AntiLink: newData,
+                            })
+                            feature.save();
+                        } else {
+                            feature.AntiLink = newData;
+                            feature.save();
+                        }
+                    },
+                    categoryOptionsList: [
+                        {
+                            optionId: "alnch",
+                            optionName: "Anti Link ignored categories",
+                            optionDescription: "Set or reset the categories to be ignored",
+                            optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let data = await antiLinkDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.ignoredChannels
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await antiLinkDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new antiLinkDB({
+                                        GuildID: guild.id,
+                                        ignoredChannels: newData
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.ignoredChannels = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                    ]
+
+                },
+
                 // Suggestions
                 {
                     categoryId: "suggestions",
@@ -593,59 +590,41 @@ module.exports = {
                     categoryDescription: "Setup the suggestions settings for the bot",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1060266044498903212/general.png',
                     refreshOnSave: true,
+                    toggleable: true,
+                    getActualSet: async ({ guild }) => {
+                        let feature = await featuresDB.findOne({ GuildID: guild.id });
+                        if (!feature) return false;
+                        return feature.Suggestions;
+                    },
+                    setNew: async ({ guild, newData }) => {
+                        let feature = await featuresDB.findOne({GuildID: guild.id});
+
+                        if (!newData) newData = null
+
+                        if (!feature) {
+                            feature = new featuresDB({
+                                GuildID: guild.id,
+                                Suggestions: newData,
+                            })
+                            feature.save();
+                        } else {
+                            feature.Suggestions = newData;
+                            feature.save();
+                        }
+
+                    },
+                    allowedCheck: async ({ guild }) => {
+                        let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                        let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                        if (!channel) return { error: true, errorMessage: "No data found! have you set up the channel yet?" }
+
+                        if (!channel.Suggestions) {
+                            return { allowed: false, errorMessage: "You need to set the suggestions channel first" }
+                        }
+                        return { allowed: true }
+                    },
                     categoryOptionsList: [
-                        {
-                            optionId: "suggestionstatus",
-                            optionName: "Suggestions Status",
-                            optionDescription: "Enable or disable the suggestions feature",
-                            optionType:  DBD.formTypes.switch(false),
-                            getActualSet: async ({ guild }) => {
-                                let data = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.Suggestions
-                                else return null
-                            },
-                            setNew: async ({ guild, newData }) => {
-
-                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!feature) {
-
-                                    if (!channel.Suggestions) {
-                                        return { error: true, errorMessage: "You need to set the suggestions channel first" }
-                                    } else {
-                                        feature = new featuresDB({
-                                        Guild: guild.id,
-                                        Suggestions: newData,
-                                        })
-
-                                        await feature.save()
-                                    }
-
-                                } else {
-
-                                    feature.Suggestions = newData
-                                    await feature.save()
-
-                                }
-
-                                return
-
-                            },
-                            allowedCheck: async ({ guild,user }) => {
-                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
-
-                                if (!channel) return { error: true, errorMessage: "No data found! have you set up the channel yet?" }
-
-                                if (!channel.Suggestions) {
-                                    return { allowed: false, errorMessage: "You need to set the suggestions channel first" }
-                                }
-                                return { allowed: true }
-                            }
-                        },
                         {
                             optionId: "suggestionch",
                             optionName: "Suggestions Channel",
@@ -848,43 +827,43 @@ module.exports = {
                                     data.Channel = newData
                                     await data.save()
 
-                                        if (data.Enabled === true) {
-                                            console.log("Channel Changed: " + channelChanged)
-                                            console.log("sending new message")
-                                            let message = await channel.send({
-                                                embeds: [
-                                                    new EmbedBuilder()
-                                                        .setColor(client.color)
-                                                        .setTitle("✅ | Verification")
-                                                        .setDescription(data.Message)
-                                                        .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
-                                                        .setTimestamp()
-                                                ],
-                                                components: [
-                                                    new ActionRowBuilder().addComponents(
-                                                        new ButtonBuilder()
-                                                            .setLabel("Verify")
-                                                            .setStyle(ButtonStyle.Secondary)
-                                                            .setCustomId("verify")
-                                                    )
-                                                ]
-                                            })
-                                            const oldMessageID = data.MessageID
+                                    if (data.Enabled === true) {
+                                        console.log("Channel Changed: " + channelChanged)
+                                        console.log("sending new message")
+                                        let message = await channel.send({
+                                            embeds: [
+                                                new EmbedBuilder()
+                                                    .setColor(client.color)
+                                                    .setTitle("✅ | Verification")
+                                                    .setDescription(data.Message)
+                                                    .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                    .setTimestamp()
+                                            ],
+                                            components: [
+                                                new ActionRowBuilder().addComponents(
+                                                    new ButtonBuilder()
+                                                        .setLabel("Verify")
+                                                        .setStyle(ButtonStyle.Secondary)
+                                                        .setCustomId("verify")
+                                                )
+                                            ]
+                                        })
+                                        const oldMessageID = data.MessageID
 
-                                            const messageID = message.id
+                                        const messageID = message.id
 
-                                            const channelId = data.Channel
-                                            const messageId = oldMessageID
+                                        const channelId = data.Channel
+                                        const messageId = oldMessageID
 
-                                            console.log("Removing message with id : " + oldMessageID + " from channel" + channelId)
+                                        console.log("Removing message with id : " + oldMessageID + " from channel" + channelId)
 
-                                            client.channels.fetch(channelId).then(channel => {
-                                                channel.messages.delete(messageId);
-                                            });
+                                        client.channels.fetch(channelId).then(channel => {
+                                            channel.messages.delete(messageId);
+                                        });
 
-                                            data.MessageID = messageID;
-                                            await data.save();
-                                        }
+                                        data.MessageID = messageID;
+                                        await data.save();
+                                    }
 
 
                                 }
@@ -1030,46 +1009,46 @@ module.exports = {
 
                                 } else {
 
-                                        data.Message = newData
-                                        await data.save()
+                                    data.Message = newData
+                                    await data.save()
 
-                                        if (data.Enabled === true) {
+                                    if (data.Enabled === true) {
 
-                                            const channel = client.channels.cache.get(data.Channel);
+                                        const channel = client.channels.cache.get(data.Channel);
 
-                                            let message = await channel.send({
-                                                embeds: [
-                                                    new EmbedBuilder()
-                                                        .setColor(client.color)
-                                                        .setTitle("✅ | Verification")
-                                                        .setDescription(data.Message)
-                                                        .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
-                                                        .setTimestamp()
-                                                ],
-                                                components: [
-                                                    new ActionRowBuilder().addComponents(
-                                                        new ButtonBuilder()
-                                                            .setLabel("Verify")
-                                                            .setStyle(ButtonStyle.Secondary)
-                                                            .setCustomId("verify")
-                                                    )
-                                                ]
-                                            })
+                                        let message = await channel.send({
+                                            embeds: [
+                                                new EmbedBuilder()
+                                                    .setColor(client.color)
+                                                    .setTitle("✅ | Verification")
+                                                    .setDescription(data.Message)
+                                                    .setFooter({ text: "powered by zeenbot", iconURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png' })
+                                                    .setTimestamp()
+                                            ],
+                                            components: [
+                                                new ActionRowBuilder().addComponents(
+                                                    new ButtonBuilder()
+                                                        .setLabel("Verify")
+                                                        .setStyle(ButtonStyle.Secondary)
+                                                        .setCustomId("verify")
+                                                )
+                                            ]
+                                        })
 
-                                            const oldMessageID = data.MessageID
+                                        const oldMessageID = data.MessageID
 
-                                            const messageID = message.id
+                                        const messageID = message.id
 
-                                            const channelId = data.Channel
-                                            const messageId = oldMessageID
+                                        const channelId = data.Channel
+                                        const messageId = oldMessageID
 
-                                            client.channels.fetch(channelId).then(channel => {
-                                                channel.messages.delete(messageId);
-                                            });
+                                        client.channels.fetch(channelId).then(channel => {
+                                            channel.messages.delete(messageId);
+                                        });
 
-                                            data.MessageID = messageID;
-                                            await data.save();
-                                        }
+                                        data.MessageID = messageID;
+                                        await data.save();
+                                    }
 
                                 }
 
@@ -1090,7 +1069,7 @@ module.exports = {
 
                 {
                     categoryId: "welcome",
-                    categoryName: "Welcome System",
+                    categoryName: "Welcome",
                     categoryDescription: "Setup the Welcome Channel",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058429901549600768/welcome.png',
                     categoryOptionsList: [
