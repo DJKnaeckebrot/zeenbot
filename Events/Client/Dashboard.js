@@ -300,9 +300,14 @@ module.exports = {
                         }
                     },
                 },
+                shardspage: {
+                    enabled: true,
+
+                    key: "penis",
+                },
                 websiteName: "zeenbot",
                 colorScheme: "blue",
-                supporteMail: "support@zeenbot.de",
+                supporteMail: "support@zeenbot.xyz",
                 icons: {
                     favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
                     noGuildIcon: "https://pnggrid.com/wp-content/uploads/2021/05/Discord-Logo-Circle-1024x1024.png",
