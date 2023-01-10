@@ -2,12 +2,12 @@ const nodes = [
     {
         name: "Lavalink",
         id: "main",
-        host: "0.0.0.0",
-        port: 8080,
-        password: "Massai.123",
+        host: "node1.kartadharta.xyz",
+        port: 443,
+        password: "kdlavalink",
         retryAmount: 15,
         retryDelay: 6000,
-        secure: false
+        secure: true
     }
 ]
 
