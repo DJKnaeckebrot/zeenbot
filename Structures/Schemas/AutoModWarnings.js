@@ -18,5 +18,4 @@ module.exports = model("automodwarnings", new Schema({
     DefaultBanTime: { type: Number, default: 180 },
     DefaultBanType: { type: String, default: "Days" },
 
-
 }))

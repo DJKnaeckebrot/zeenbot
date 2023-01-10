@@ -83,8 +83,8 @@ module.exports = {
 
                 let Data = new DB({
 
-                    User: Member.id,
-                    Guild: guild.id,
+                    UserID: Member.id,
+                    GuildID: guild.id,
                     Moderator: user.id,
                     Reason: reason,
                     Timestamp: Date.now()
@@ -106,7 +106,7 @@ module.exports = {
                                 { name: "Warned in:", value: `${guild.name}`, inline: true },
                                 { name: "Reason:", value: `${reason}`, inline: false },
                             )
-                            .setFooter({ text: "Warned by zeenbot" })
+                            .setFooter({ text: `ID: ${Data._id} | zeenbot`, iconURL: client.user.displayAvatarURL() })
                             .setTimestamp()
                     ]
                 }).catch((err) => {
@@ -142,7 +142,7 @@ module.exports = {
                 if (!member) return Reply(interaction, "❌", `The member couldn't be found!`)
                 const Member = guild.members.cache.get(member.id)
 
-                const userWarns = await DB.find({ User: Member.id, Guild: guild.id }).catch(err => { })
+                const userWarns = await DB.find({ UserID: Member.id, GuildID: guild.id }).catch(err => { })
                 if (userWarns.length === 0) return Reply(interaction, "❌", `**${Member}** does not have any warnings!`)
 
                 const embeds = warnlistEmbed(userWarns, 5, guild, Member, client)

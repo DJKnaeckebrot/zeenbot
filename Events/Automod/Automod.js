@@ -1,7 +1,10 @@
 const { Client, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { checkUserThresholds } = require("./tools/checkThreshold");
 const featuresDB = require("../../Structures/Schemas/Features");
 const channelsDB = require("../../Structures/Schemas/Channels");
 const automodDB = require("../../Structures/Schemas/Automod");
+const warningsDB = require("../../Structures/Schemas/Warnings");
+const automodwarnsDB = require("../../Structures/Schemas/AutoModWarnings");
 
 module.exports = {
     name: "messageCreate",
@@ -19,6 +22,9 @@ module.exports = {
         let channels = await channelsDB.findOne({ GuildID: guild.id });
         let features = await featuresDB.findOne({ GuildID: guild.id });
         let automods = await automodDB.findOne({ GuildID: guild.id });
+
+        const wordAction = automods.wordAction;
+
 
         if (features.AutoMod === false) return;
 
@@ -126,12 +132,16 @@ module.exports = {
                     loggingChannel.send({ embeds: [embed] });
                 }
 
-
                 msg.delete();
 
                 msg.channel
                     .send({ embeds: [e], content: `${msg.author}` })
                     .then((mg) => setTimeout(mg.delete.bind(mg), 10000));
+
+
+                console.log("Sending Threshold Check with : " + msg.author + " | " + guild + " |  words ");
+
+                const userWordThreshold = await checkUserThresholds(client, msg.author.id, guild, "words");
 
                 return;
             }

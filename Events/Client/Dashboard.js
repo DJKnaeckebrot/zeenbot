@@ -21,7 +21,7 @@ const reactionRolesDB = require("../../Structures/Schemas/ReactionRoles")
 const featuresDB = require("../../Structures/Schemas/Features")
 const channelsDB = require("../../Structures/Schemas/Channels")
 const automodDB = require("../../Structures/Schemas/Automod")
-const automodWarningsDB = require("../../Structures/Schemas/AutomodWarnings")
+const automodWarningsDB = require("../../Structures/Schemas/AutoModWarnings")
 
 module.exports = {
     name: "ready",
@@ -1905,6 +1905,48 @@ module.exports = {
                             optionId: "welmsg",
                             optionName: "Welcome Message",
                             optionDescription: "Set the welcome messsage",
+                            optionType: DBD.formTypes.input("Welcome to my server!", 1, 256, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await WelcomeDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (data) return data.Msg
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await WelcomeDB.findOne({ Guild: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new WelcomeDB({
+                                        Guild: guild.id,
+                                        Channel: null,
+                                        Msg: newData,
+                                        DM: false,
+                                        DMMessage: null,
+                                        Content: false,
+                                        Embed: false
+
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.Msg = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            }
+                        },
+                        {
+                            optionId: "welmsg",
+                            optionName: "Welcome Message Background",
+                            optionDescription: "Set the welcome messsages background image",
                             optionType: DBD.formTypes.input("Welcome to my server!", 1, 256, false, false),
                             getActualSet: async ({ guild }) => {
                                 let data = await WelcomeDB.findOne({ Guild: guild.id }).catch(err => { })
