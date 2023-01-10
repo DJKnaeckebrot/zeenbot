@@ -8,6 +8,7 @@ const {
     PermissionFlagsBits,
 } = require("discord.js");
 const antilinkSchema = require("../../Structures/Schemas/anitLink");
+const featuresDB = require("../../Structures/Schemas/Features");
 
 module.exports = {
     name: "antilink",
@@ -27,9 +28,10 @@ module.exports = {
 
         await interaction.deferReply();
 
-        let requireDB = await antilinkSchema.findOne({ Guild: guild.id });
+        let requireDB = await antilinkSchema.findOne({ GuildID: guild.id });
+        let features = await featuresDB.findOne({ GuildID: guild.id });
 
-        const sistema = requireDB?.logs === true ? "📗 Activated" : "📕 Disabled";
+        const sistema = features.AntiLink === true ? "📗 Activated" : "📕 Disabled";
 
         const e2 = new EmbedBuilder()
             .setTitle(`🔗 Antilink`)
@@ -72,13 +74,9 @@ module.exports = {
 
                 ds.update({ embeds: [e], components: [] });
 
-                await antilinkSchema.findOneAndUpdate(
-                    { Guild: guild.id },
-                    {
-                        $set: { logs: true },
-                    },
-                    { upsert: true }
-                );
+                features.AntiLink = true;
+                await features.save();
+
             } else if (ds.customId === `false`) {
                 const e = new EmbedBuilder()
                     .setDescription(`📕 Antilink system has been set to **Disabled**!`)
@@ -86,13 +84,8 @@ module.exports = {
 
                 ds.update({ embeds: [e], components: [] });
 
-                await antilinkSchema.findOneAndUpdate(
-                    { Guild: guild.id },
-                    {
-                        $set: { logs: false },
-                    },
-                    { upsert: true }
-                );
+                features.AntiLink = false;
+                await features.save();
             }
         });
     },
