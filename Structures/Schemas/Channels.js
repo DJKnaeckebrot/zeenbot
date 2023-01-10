@@ -4,5 +4,6 @@ module.exports = model("channels", new Schema({
 
     GuildID: String,
     Suggestions: String,
+    AutoModLogging: String,
 
 }))

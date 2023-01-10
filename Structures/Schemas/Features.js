@@ -6,5 +6,6 @@ module.exports = model("features", new Schema({
     Suggestions: { type: Boolean, default: false },
     AntiLink: { type: Boolean, default: false },
     Verification: { type: Boolean, default: false },
+    AutoMod: { type: Boolean, default: false },
 
 }))
