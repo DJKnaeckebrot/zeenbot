@@ -7,5 +7,6 @@ module.exports = model("features", new Schema({
     AntiLink: { type: Boolean, default: false },
     Verification: { type: Boolean, default: false },
     AutoMod: { type: Boolean, default: false },
+    VoiceHubs: { type: Boolean, default: false },
 
 }))

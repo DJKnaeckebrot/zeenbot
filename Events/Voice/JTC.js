@@ -1,5 +1,7 @@
 const { Client, VoiceState, ChannelType, client, EmbedBuilder} = require("discord.js");
 const DB = require("../../Structures/Schemas/VoiceSystem");
+const featuresDB = require("../../Structures/Schemas/Features");
+const channelsDB = require("../../Structures/Schemas/Channels");
 
 module.exports = {
     name: "voiceStateUpdate",
@@ -14,12 +16,46 @@ module.exports = {
         const { member, guild } = newState;
         const oldChannel = oldState.channel;
         const newChannel = newState.channel;
+
+        const channels = await channelsDB.findOne({ GuildID: guild.id });
+        const features = await featuresDB.findOne({ GuildID: guild.id });
+        const voiceHubs = await DB.findOne({ GuildID: guild.id });
+
+        if (!channels) return;
+
+        const voiceHub = channels.VoiceHubs;
+
+        const year = new Date().getFullYear();
+
+        if (features.VoiceHubs === false) {
+            if (oldChannel !== newChannel && newChannel && voiceHub.includes(newChannel.id)) {
+                member.send({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setTitle("WOW an easter egg!")
+                            .setDescription("Looks like you found a feature that is not enabled on this server. If you want to enable this feature, please contact the server owner.")
+                            .setColor(client.color)
+                            .setTimestamp()
+                            .setFooter({
+                                text: `©️ ${year} | zeenbot`, iconURL: client.user.avatarURL()
+                            })
+                    ]
+                })
+            }
+        }
+
         const joinToCreate = DB.findOne({ GuildID: guild.id }, async (err, data) => {
             if(!data) return;
 
-            if(oldChannel !== newChannel && newChannel && newChannel.id === data.ChannelID) {
+            if (features.VoiceHubs === false) return;
+
+            let channelNameDesign = voiceHubs.DefaultName || `🗣 │ ${member.user.tag}`;
+            let channelName = channelNameDesign.replace(/{user}/g, member.user.tag);
+
+
+            if(oldChannel !== newChannel && newChannel && voiceHub.includes(newChannel.id)) {
                 const voiceChannel = await guild.channels.create({
-                    name: `🗣 │ ${member.user.tag}`,
+                    name: channelName,
                     type: ChannelType.GuildVoice,
                     parent: newChannel.parent,
                     permissionOverwrites: [

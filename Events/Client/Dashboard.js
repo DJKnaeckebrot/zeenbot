@@ -605,10 +605,10 @@ module.exports = {
                 // Auto Mod
                 {
                     categoryId: "automod",
-                    categoryName: "Auto Mod (Coming Soon)",
+                    categoryName: "Auto Mod",
                     categoryDescription: "Auto Mod Settings",
                     categoryImageURL: "https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png",
-                    toggleable: false,
+                    toggleable: true,
                     getActualSet: async ({ guild }) => {
                         let feature = await featuresDB.findOne({ GuildID: guild.id });
                         if (!feature) return false;
@@ -657,8 +657,11 @@ module.exports = {
                                         GuildID: guild.id,
                                         IgnoredChannels: [],
                                         IgnoredRoles: [],
+                                        IgnoreAdmins: true,
                                         FilteredWords: [],
                                         FilteredLinks: [],
+                                        FilterCaps: false
+
                                     })
 
                                     await automod.save()
@@ -2831,37 +2834,56 @@ module.exports = {
                     categoryName: "Voice Hubs ⭐",
                     categoryDescription: "Setup the voice Hub for the server",
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107448409858208/zlogo-gold.png',
+                    toggleable: true,
+                    getActualSet: async ({ guild }) => {
+                        let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+                        if (feature) return feature.VoiceHubs
+                        else return false
+                    },
+                    setNew: async ({ guild, newData }) => {
+                        let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+                        if (!feature) {
+                            feature = new featuresDB({
+                                GuildID: guild.id,
+                                VoiceHubs: newData
+                            })
+                            await feature.save()
+                        } else {
+                            feature.VoiceHubs = newData
+                            await feature.save()
+                        }
+                        return
+                    },
                     categoryOptionsList: [
                         {
                             optionId: "hub",
-                            optionName: "Hub",
+                            optionName: "Hubs",
                             optionDescription: "Set the channel for the voice hub",
-                            optionType: DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildVoice]),
+                            optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildVoice]),
                             getActualSet: async ({ guild }) => {
-                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
-                                if (data) return data.ChannelID
-                                else return null
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (channel) return channel.VoiceHubs
+                                else return []
                             },
                             setNew: async ({ guild, newData }) => {
 
                                 let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
 
                                 if (!newData) newData = null
 
-                                if (!data) {
+                                if (!channel) {
 
-                                    data = new voiceDB({
+                                    channel = new channelsDB({
                                         GuildID: guild.id,
-                                        ChannelID: newData,
+                                        VoiceHubs: newData
                                     })
 
-                                    await data.save()
+                                    await channel.save()
 
                                 } else {
-
-                                    data.ChannelID = newData
-                                    await data.save()
-
+                                    channel.VoiceHubs = newData
+                                    await channel.save()
                                 }
 
                                 return
@@ -2878,7 +2900,7 @@ module.exports = {
                             optionId: "hublimit",
                             optionName: "Hub User Limit ⭐",
                             optionDescription: "Set the max user size for the voice hub",
-                            optionType: DBD.formTypes.input("3", 1, 2, false, false),
+                            optionType: SoftUI.formTypes.numberPicker(false),
                             getActualSet: async ({ guild }) => {
                                 let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
                                 if (data) return data.MaxSize
@@ -2915,7 +2937,49 @@ module.exports = {
                                 if (data.isPremium) return {allowed: true }
                                 return {allowed: false, errorMessage: "Your server is not premium!"}
                             },
-                        }
+                        },
+                        {
+                            optionId: "hubname",
+                            optionName: "Hub Channel Name ⭐",
+                            optionDescription: "Set the default channel name for the voice hub \n Available Variables: \n {user} - The user who created the channel \n {hub} - The hub name",
+                            optionType: DBD.formTypes.input("🗣 │ {user}", 1, 22, false, false),
+                            getActualSet: async ({ guild }) => {
+                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (data) return data.MaxSize
+                                else return null
+                            },
+                            setNew: async ({ guild, newData }) => {
+
+                                let data = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!data) {
+
+                                    data = new voiceDB({
+                                        GuildID: guild.id,
+                                        MaxSize: newData,
+                                    })
+
+                                    await data.save()
+
+                                } else {
+
+                                    data.MaxSize = newData
+                                    await data.save()
+
+                                }
+
+                                return
+
+                            },
+                            allowedCheck: async ({guild,user}) => {
+                                let data = await premiumServerDB.findOne({ Id: guild.id }).catch(err => { })
+                                if (!data) return {allowed: false, errorMessage: "Your server is not premium!"}
+                                if (data.isPremium) return {allowed: true }
+                                return {allowed: false, errorMessage: "Your server is not premium!"}
+                            },
+                        },
                     ]
                 },
 
