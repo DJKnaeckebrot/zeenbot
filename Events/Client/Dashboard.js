@@ -20,6 +20,8 @@ const TicketSetup = require("../../Structures/Schemas/TicketSetup");
 const reactionRolesDB = require("../../Structures/Schemas/ReactionRoles")
 const featuresDB = require("../../Structures/Schemas/Features")
 const channelsDB = require("../../Structures/Schemas/Channels")
+const automodDB = require("../../Structures/Schemas/Automod")
+const automodWarningsDB = require("../../Structures/Schemas/AutomodWarnings")
 
 module.exports = {
     name: "ready",
@@ -37,6 +39,7 @@ module.exports = {
         let Community = []
         let Tickets = []
         let Giveaway = []
+        let testSettings = {}
 
         const info = client.commands.filter(x => x.category === "Information")
         const mod = client.commands.filter(x => x.category === "Moderation")
@@ -437,6 +440,19 @@ module.exports = {
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     categoryOptionsList: [
                         {
+                            optionId: "test",
+                            optionName: "taginputtest",
+                            optionDescription: "",
+                            optionType:  SoftUI.formTypes.tagInput(false),
+                            getActualSet: async ({ guild }) => {
+                                return testSettings[guild.id] || null
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                testSettings[guild.id] = newData;
+                                return;
+                            }
+                        },
+                        {
                             optionId: "mods",
                             optionName: "Moderators",
                             optionDescription: "Set the role for the mods/Admins",
@@ -584,6 +600,775 @@ module.exports = {
                         },
                     ]
 
+                },
+
+                // Auto Mod
+                {
+                    categoryId: "automod",
+                    categoryName: "Auto Mod (Coming Soon)",
+                    categoryDescription: "Auto Mod Settings",
+                    categoryImageURL: "https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png",
+                    toggleable: false,
+                    getActualSet: async ({ guild }) => {
+                        let feature = await featuresDB.findOne({ GuildID: guild.id });
+                        if (!feature) return false;
+                        return feature.AutoMod;
+                    },
+                    setNew: async ({ guild, newData }) => {
+                        let feature = await featuresDB.findOne({ GuildID: guild.id });
+
+                        if (!newData) newData = null
+
+                        if (!feature) {
+                            feature = new featuresDB({
+                                GuildID: guild.id,
+                                AutoMod: newData,
+                            })
+                            feature.save();
+                        } else {
+                            feature.AutoMod = newData;
+                            feature.save();
+                        }
+
+                        return;
+                    },
+                    categoryOptionsList: [
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: 'Auto Mod Ignore',
+                            optionDescription: 'Set up what/who/where should ignore.',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    first: true,
+                                },
+                            }
+                        },
+                        {
+                            optionId: "amch",
+                            optionName: "Auto Mod ignored channels",
+                            optionDescription: "Set the channels to be ignored by the Auto Mod.",
+                            optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automod) {
+                                    automod = new automodDB({
+                                        GuildID: guild.id,
+                                        IgnoredChannels: [],
+                                        IgnoredRoles: [],
+                                        FilteredWords: [],
+                                        FilteredLinks: [],
+                                    })
+
+                                    await automod.save()
+
+                                    return null
+                                }
+                                return automod.IgnoredChannels
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automod) {
+                                    automod = new automodDB({
+                                        GuildID: guild.id,
+                                        IgnoredChannels: newData
+                                    })
+                                    await automod.save()
+                                } else {
+                                    automod.IgnoredChannels = newData
+                                    await automod.save()
+                                }
+
+                                return;
+                            },
+                        },
+                        {
+                            optionId: "amrole",
+                            optionName: "Auto Mod ignored roles",
+                            optionDescription: "Set the roles to be ignored by the Auto Mod.",
+                            optionType: DBD.formTypes.rolesMultiSelect(false, true, false),
+                            getActualSet: async ({ guild }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automod) return null
+                                return automod.IgnoredRoles
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automod) {
+                                    automod = new automodDB({
+                                        GuildID: guild.id,
+                                        IgnoredRoles: newData
+                                    })
+                                    await automod.save()
+                                } else {
+                                    automod.IgnoredRoles = newData
+                                    await automod.save()
+                                }
+
+                                return;
+                            },
+                        },
+                        {
+                            optionId: "amignadm",
+                            optionName: "Auto Mod ignores admins.",
+                            optionDescription: "Set if the Auto Mod should ignore admins.",
+                            optionType: DBD.formTypes.switch(false),
+                            getActualSet: async ({ guild }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automod) return null
+                                return automod.IgnoreAdmins
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automod) {
+                                    automod = new automodDB({
+                                        GuildID: guild.id,
+                                        IgnoreAdmins: newData
+                                    })
+                                    await automod.save()
+                                } else {
+                                    automod.IgnoreAdmins = newData
+                                    await automod.save()
+                                }
+
+                                return;
+
+                            },
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: '',
+                            optionDescription: '',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    last: true,
+                                },
+                            }
+                        },
+                        {
+                            optionId: "amlog",
+                            optionName: "Auto Mod logging channel",
+                            optionDescription: "Set the channel you want auto mod to log into.",
+                            optionType: DBD.formTypes.channelsSelect(false,channelTypes = [ChannelType.GuildText]),
+                            getActualSet: async ({ guild }) => {
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!channel) return null
+                                return channel.AutoModLogging
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!channel) {
+                                    channel = new channelsDB({
+                                        GuildID: guild.id,
+                                        AutoModLogging: newData
+                                    })
+                                    await channel.save()
+                                } else {
+                                    channel.AutoModLogging = newData
+                                    await channel.save()
+                                }
+
+                                return;
+                            },
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: 'Auto Mod Filter',
+                            optionDescription: 'Set up what Auto Mod should filter.',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    first: true,
+                                },
+                            }
+                        },
+                        {
+                            optionId: "amfilterwords",
+                            optionName: "Words",
+                            optionDescription: "Set the words you want to be filtered by the Auto Mod.",
+                            optionType: SoftUI.formTypes.tagInput(false),
+                            getActualSet: async ({ guild }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automod) return null
+                                return automod.FilteredWords
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automod) {
+                                    automod = new automodDB({
+                                        GuildID: guild.id,
+                                        FilteredWords: newData
+                                    })
+                                    await automod.save()
+                                } else {
+                                    automod.FilteredWords = newData
+                                    await automod.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amfilterlinks",
+                            optionName: "Links",
+                            optionDescription: "Set the links you want to be filtered by the Auto Mod.",
+                            optionType: SoftUI.formTypes.tagInput(false),
+                            getActualSet: async ({ guild }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automod) return null
+                                return automod.FilteredLinks
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automod = await automodDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automod) {
+                                    automod = new automodDB({
+                                        GuildID: guild.id,
+                                        FilteredLinks: newData
+                                    })
+                                    await automod.save()
+                                } else {
+                                    automod.FilteredLinks = newData
+                                    await automod.save()
+                                }
+
+                                return;
+                            },
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: '',
+                            optionDescription: '',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    last: true,
+                                },
+                            }
+                        },
+
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: 'Auto Mod Thresholds',
+                            optionDescription: 'Set the thresholds for the Auto Mod.',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    first: true,
+                                },
+                            }
+                        },
+                        {
+                            optionId: "amthresholdwords",
+                            optionName: "Blocked words",
+                            optionDescription: "Set at after how many words being blocked the Auto Mod should take action.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        WordThreshold: 3,
+                                        LinkThreshold: 3,
+                                        CapsThreshold: 3,
+                                        MentionThreshold: 3,
+                                        InviteThreshold: 3,
+                                        WordAction: "Warn",
+                                        LinkAction: "Warn",
+                                        CapsAction: "Warn",
+                                        MentionAction: "Warn",
+                                        InviteAction: "Warn",
+                                        DefaultMuteTime:  5,
+                                        DefaultMuteType: "Minutes",
+                                        DefaultBanTime: 180,
+                                        DefaultBanType: "Days",
+                                    })
+                                    await automodwarnings.save()
+                                    return 3
+                                }
+                                return automodwarnings.WordThreshold
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        WordThreshold: newData
+                                    })
+                                    await automodwarnings.save()
+                                } else {
+                                    automodwarnings.WordThreshold = newData
+                                    await automodwarnings.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amthresholdlinks",
+                            optionName: "Blocked links",
+                            optionDescription: "Set at after how many links being blocked the Auto Mod should take action.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodwarnings) return null
+                                return automodwarnings.LinkThreshold
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        LinkThreshold: newData
+                                    })
+                                    await automodwarnings.save()
+                                } else {
+                                    automodwarnings.LinkThreshold = newData
+                                    await automodwarnings.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amthresholdlinks",
+                            optionName: "Blocked capslock",
+                            optionDescription: "Set at after how many time capslock being blocked the Auto Mod should take action.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodwarnings) return null
+                                return automodwarnings.CapsThreshold
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        CapsThreshold: newData
+                                    })
+                                    await automodwarnings.save()
+                                } else {
+                                    automodwarnings.CapsThreshold = newData
+                                    await automodwarnings.save()
+                                }
+
+                                return;
+                            },
+                        },
+                        {
+                            optionId: "amthresholdmentions",
+                            optionName: "Blocked Mentions",
+                            optionDescription: "Set at after how many mentions being blocked the Auto Mod should take action.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodwarnings) return null
+                                return automodwarnings.MentionThreshold
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        MentionThreshold: newData
+                                    })
+                                    await automodwarnings.save()
+                                } else {
+                                    automodwarnings.MentionThreshold = newData
+                                    await automodwarnings.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amthresholdinvites",
+                            optionName: "Blocked Invites",
+                            optionDescription: "Set at after how many invites being blocked the Auto Mod should take action.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodwarnings) return null
+                                return automodwarnings.InviteThreshold
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        InviteThreshold: newData
+                                    })
+                                    await automodwarnings.save()
+                                } else {
+                                    automodwarnings.InviteThreshold = newData
+                                    await automodwarnings.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: '',
+                            optionDescription: '',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    last: true,
+                                },
+                            }
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: 'Auto Mod Actions',
+                            optionDescription: 'Set the default actions for Auto Mod.',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    first: true,
+                                },
+                            }
+                        },
+                        {
+                            optionId: "amactionwords",
+                            optionName: "Blocked words",
+                            optionDescription: "Set the default action for blocked words.",
+                            optionType: DBD.formTypes.select({ 'Warn': 'Warn', 'Mute': 'Mute', 'Kick': 'Kick', 'Ban': 'Ban' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.WordAction
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        WordAction: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.WordAction = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactionlink",
+                            optionName: "Blocked links",
+                            optionDescription: "Set the default action for blocked links.",
+                            optionType: DBD.formTypes.select({ 'Warn': 'Warn', 'Mute': 'Mute', 'Kick': 'Kick', 'Ban': 'Ban' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.LinkAction
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        LinkAction: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.LinkAction = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactioncaps",
+                            optionName: "Blocked capslock",
+                            optionDescription: "Set the default action for blocked capslock.",
+                            optionType: DBD.formTypes.select({ 'Warn': 'Warn', 'Mute': 'Mute', 'Kick': 'Kick', 'Ban': 'Ban' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.CapsAction
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        CapsAction: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.CapsAction = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactionmentions",
+                            optionName: "Blocked capslock",
+                            optionDescription: "Set the default action for blocked capslock.",
+                            optionType: DBD.formTypes.select({ 'Warn': 'Warn', 'Mute': 'Mute', 'Kick': 'Kick', 'Ban': 'Ban' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.MentionAction
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        MentionAction: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.MentionAction = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactionmentions",
+                            optionName: "Blocked capslock",
+                            optionDescription: "Set the default action for blocked capslock.",
+                            optionType: DBD.formTypes.select({ 'Warn': 'Warn', 'Mute': 'Mute', 'Kick': 'Kick', 'Ban': 'Ban' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.InviteAction
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        InviteAction: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.InviteAction = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: '',
+                            optionDescription: '',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    last: true,
+                                },
+                            }
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: 'Auto Mod Default Action Times',
+                            optionDescription: 'Set the default action times for Auto Mod.',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    first: true,
+                                },
+                            }
+                        },
+                        {
+                            optionId: "amactiondurationmute",
+                            optionName: "Mute Action Duration",
+                            optionDescription: "Set the default mute duration for actions that are not set to warn or kick.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.DefaultMuteTime
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        DefaultMuteTime: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.DefaultMuteTime = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactiondurationmutetype",
+                            optionName: "Mute Action Duration Interval",
+                            optionDescription: "Set the default time format for mute action.",
+                            optionType: DBD.formTypes.select({ 'Seconds': 'Seconds', 'Minutes': 'Minutes', 'Hours': 'Hours', 'Days': 'Days', 'Weeks': 'Weeks', 'Months': 'Months', 'Years': 'Years' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.DefaultMuteType
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        DefaultMuteType: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.DefaultMuteType = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactiondurationban",
+                            optionName: "Ban Action Duration",
+                            optionDescription: "Set the default ban duration for actions that are not set to warn or kick.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.DefaultBanTime
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        DefaultBanTime: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.DefaultBanTime = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactiondurationbantype",
+                            optionName: "Ban Action Duration Interval",
+                            optionDescription: "Set the default time format for ban action.",
+                            optionType: DBD.formTypes.select({ 'Seconds': 'Seconds', 'Minutes': 'Minutes', 'Hours': 'Hours', 'Days': 'Days', 'Weeks': 'Weeks', 'Months': 'Months', 'Years': 'Years' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.DefaultBanType
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        DefaultBanType: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.DefaultBanType = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionType: SoftUI.formTypes.spacer(),
+                            optionName: '',
+                            optionDescription: '',
+                            title: "",
+                            description: "",
+                            themeOptions: {
+                                startNewSection: {
+                                    last: true,
+                                },
+                            }
+                        },
+
+                    ]
                 },
 
                 // Suggestions
