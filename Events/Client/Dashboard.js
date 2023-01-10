@@ -347,7 +347,9 @@ module.exports = {
                     }
                 },
                 sweetalert: {
-                    errors: {},
+                    errors: {
+                        requirePremium: "You need to be a premium member to do this.",
+                    },
                     success: {
                         login: "Successfully logged in.",
                     }
@@ -516,7 +518,6 @@ module.exports = {
                 },
 
                 // Anti Link
-
                 {
                     categoryId: "antilink",
                     categoryName: "Anti Link",
@@ -1068,7 +1069,6 @@ module.exports = {
                 },
 
                 // Welcome System
-
                 {
                     categoryId: "welcome",
                     categoryName: "Welcome",
@@ -2093,7 +2093,6 @@ module.exports = {
                 },
 
                 // Logging System
-
                 {
                     categoryId: "logs",
                     categoryName: "Logging System",
