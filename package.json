@@ -34,6 +34,7 @@
     "node-cron": "^3.0.2",
     "os": "^0.1.2",
     "systeminformation": "^5.16.9",
+    "ultrax": "^2.0.5",
     "voucher-code-generator": "^1.3.0"
   }
 }
