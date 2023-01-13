@@ -9,6 +9,7 @@ const { Channel, GuildMember, Message, Reaction, ThreadMember, User, GuildSchedu
 const nodes = require("../Systems/Nodes")
 const { Manager } = require("erela.js")
 const GeneralLogsDB = require("../Structures/Schemas/LogsChannel")
+// const logger = require("../Utils/logger");
 
 const client = new Client({
     intents: 131071,
@@ -54,6 +55,25 @@ process.on("unhandledRejection", (reason, p) => {
         ],
     });
 });
+
+// process.on("unhandledRejection", (reason, p) => {
+//     logger.info(`[unhandledRejection] ${reason.message}`, { label: "ERROR" });
+//     console.log(reason, p);
+// });
+//
+// process.on("uncaughtException", (err, origin) => {
+//     logger.info(`[uncaughtException] ${err.message}`, { label: "ERROR" });
+//     console.log(err, origin);
+// });
+//
+// process.on("uncaughtExceptionMonitor", (err, origin) => {
+//     logger.info(`[uncaughtExceptionMonitor] ${err.message}`, { label: "ERROR" });
+//     console.log(err, origin);
+// });
+// process.on("multipleResolves", (type, promise, reason) => {
+//     logger.info(`[multipleResolves] MULTIPLE RESOLVES`, { label: "ERROR" });
+//     console.log(type, promise, reason);
+// });
 
 client.on("raw", (d) => client.player.updateVoiceState(d))
 
