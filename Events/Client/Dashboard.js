@@ -1,5 +1,5 @@
 const { Client, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, StringSelectMenuBuilder} = require("discord.js")
-const config = require('./config.json');
+// const config = require('./config.json');
 const SoftUI = require('dbd-soft-ui');
 let DBD = require('discord-dashboard');
 const os = require('os');
@@ -269,10 +269,10 @@ module.exports = {
                     },
                 },
                 invite: {
-                    clientId: `${config.discord.client.id}`,
+                    clientId: process.env.CLIENT_ID,
                     scopes: ["bot", "applications.commands"],
                     permissions: '8',
-                    redirectUri: `${config.dbd.domain}${config.dbd.inviteCallback}`,
+                    redirectUri: process.env.DBD_REDIRECT_URI,
                 },
                 icons: {
                     favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
