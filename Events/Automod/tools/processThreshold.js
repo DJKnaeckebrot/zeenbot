@@ -4,10 +4,10 @@ const warnDB = require("../../../Structures/Schemas/Warnings");
 const automodwarnsDB = require("../../../Structures/Schemas/AutoModWarnings");
 const automouserwarnDB = require("../../../Structures/Schemas/AutoModUserWarnings");
 const automouserthresholdDB = require("../../../Structures/Schemas/AutoModUserThresholds");
-const { kicker } = require("../actions/Kick");
-const { banner } = require("../actions/Ban");
-const { muter } = require("../actions/timeout");
-const { warner } = require("../actions/Warn");
+const { kicker } = require("../actions/kick");
+const { banner } = require("../actions/ban");
+const { muteUser } = require("../actions/timeout");
+const { warner } = require("../actions/warn");
 const {warnUser} = require("../actions/warn");
 
 async function processUserThreshold(client, user, guild, type, action) {
@@ -24,6 +24,7 @@ async function processUserThreshold(client, user, guild, type, action) {
                     break;
                 case "Mute":
                     console.log("Muting user for reaching word threshold");
+                    await muteUser(client, user, guild, "AutoMod | Reached warn threshold");
                     break;
                 case "Warn":
                     console.log("Warning user for reaching word threshold");

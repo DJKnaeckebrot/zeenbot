@@ -13,6 +13,8 @@ async function checkUserThresholds(client, user, guild, type) {
 
     console.log("Current user threshold: " + userThreshold);
 
+    console.log("User : " + user);
+
     if (!userThreshold) {
         userThreshold = new automoduserthresholdDB({
             GuildID: guild.id,
@@ -27,30 +29,32 @@ async function checkUserThresholds(client, user, guild, type) {
     }
 
     userThreshold = await automoduserthresholdDB.findOne({ GuildID: guild.id, UserID: user});
+    const userWarns = await automoduserwarnDB.find({ GuildID: guild.id, UserID: user});
+
+    console.log("User warns lenght : " + Object.keys(userWarns).length);
 
     switch (type) {
         case "words":
             if (!userThreshold.WordThreshold) {
                 console.log("No user threshold found, creating one now");
-                userThreshold = new automoduserthresholdDB({
-                    GuildID: guild.id,
-                    UserID: user,
-                    WordThreshold: 1
-                });
+                userThreshold.WordThreshold = 1;
+
                 await userThreshold.save();
-                return userThreshold.WordThreshold
             } else {
                 if (userThreshold.WordThreshold >= automodwarns.WordThreshold - 1) {
                     console.log("User threshold reached, processing now");
+                    if (Object.keys(userWarns).length >= automodwarns.WarnThreshold - 1) {
+                        console.log("User has 2 or more warns, processing threshold now");
+                        await processUserThreshold(client, user, guild, type, automodwarns.WarnAction);
+                        return
+                    }
                     await processUserThreshold(client, user, guild, type, automodwarns.WordAction);
                     userThreshold.WordThreshold++;
                     await userThreshold.save();
-                    return userThreshold.WordThreshold;
                 } else {
                     console.log("User threshold not reached, incrementing by 1");
                     userThreshold.WordThreshold++;
                     await userThreshold.save();
-                    return userThreshold.WordThreshold;
                 }
             }
             break;
