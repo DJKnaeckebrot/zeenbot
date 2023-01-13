@@ -5,6 +5,8 @@ let DBD = require('discord-dashboard');
 const os = require('os');
 //require .env file
 require('dotenv').config();
+const { dbd } = require('./dbd.js');
+const dbdClient = require('./dbd.js').discord.client;
 const PermissionsDB = require("../../Structures/Schemas/Permissions")
 const WelcomeDB = require("../../Structures/Schemas/Welcome")
 const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
@@ -58,16 +60,16 @@ module.exports = {
         CommandPush(eco, Economy)
         CommandPush(com, Community)
 
-        await DBD.useLicense(config.dbd.license)
+        await DBD.useLicense(process.env.DBD_LICENSE)
         DBD.Dashboard = DBD.UpdatedClass()
 
         const Dashboard = new DBD.Dashboard({
 
-            port: config.dbd.port,
-            client: config.discord.client,
-            redirectUri: `${config.dbd.domain}${config.dbd.redirectUri}`,
-            domain: config.dbd.domain,
-            ownerIDs: config.dbd.ownerIDs,
+            port: process.env.DBD_PORT,
+            client: { id: process.env.CLIENT_ID, secret: process.env.CLIENT_SECRET },
+            redirectUri: process.env.DBD_REDIRECT_URI,
+            domain:  process.env.DBD_URL,
+            ownerIDs: process.env.DBD_OWNER,
             useThemeMaintenance: false,
             useTheme404: true,
             acceptPrivacyPolicy: true,
