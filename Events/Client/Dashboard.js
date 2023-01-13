@@ -2,6 +2,9 @@ const { Client, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonStyle, Button
 const config = require('./config.json');
 const SoftUI = require('dbd-soft-ui');
 let DBD = require('discord-dashboard');
+const os = require('os');
+//require .env file
+require('dotenv').config();
 const PermissionsDB = require("../../Structures/Schemas/Permissions")
 const WelcomeDB = require("../../Structures/Schemas/Welcome")
 const GeneralLogsDB = require("../../Structures/Schemas/LogsChannel")
@@ -27,7 +30,7 @@ module.exports = {
     name: "ready",
 
     /**
-     * @param {Client} client 
+     * @param {Client} client
      */
     async execute(client) {
 
@@ -74,11 +77,69 @@ module.exports = {
                 guildId: "1057986397081980948"
             },
             theme: SoftUI({
+                websiteName: "zeenbot",
+                colorScheme: "blue",
+                supporteMail: "support@zeenbot.xyz",
+                customThemeOptions: {
+                    index: async ({ req, res, config }) => {
+                        let username = req.session?.user?.username || "Guest"
+
+                        const cards = [
+                            {
+                                title: "Current User",
+                                icon: "single-02",
+                                getValue: username,
+                                progressBar: {
+                                    enabled: false,
+                                    getProgress: client.guilds.cache.size
+                                }
+                            },
+                            {
+                                title: "CPU",
+                                icon: "laptop",
+                                getValue: os.cpus()[0].model.replace('(R) Core(TM) ', ' ').replace(' CPU ', '').split('@')[0],
+                                progressBar: {
+                                    enabled: false,
+                                    getProgress: 50
+                                }
+                            },
+                            {
+                                title: "System Platform",
+                                icon: "app",
+                                getValue: os.platform(),
+                                progressBar: {
+                                    enabled: false,
+                                    getProgress: 50
+                                }
+                            },
+                            {
+                                title: "Server count",
+                                icon: "bullet-list-67",
+                                getValue: `${client.guilds.cache.size}`,
+                                progressBar: {
+                                    enabled: false,
+                                    getProgress: (client.guilds.cache.size / 75) * 100
+                                }
+                            }
+                        ]
+
+                        const graph = {
+                            values: [690, 524, 345, 645, 478, 592, 468, 783, 459, 230, 621, 345],
+                            labels: ["1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "10m"]
+                        }
+
+                        return {
+                            cards,
+                            graph
+                        }
+                    }
+                },
+                dbdriver: process.env.MONGODBURL,
                 locales: {
                     enUS: {
                         name: 'English',
                         index: {
-                            feeds: ["Current Users", "CPU", "System Platform", "Server Count"],
+                            feeds: ["Current User", "CPU", "System Platform", "Server Count"],
                             card: {
                                 category: "zeenbot",
                                 title: "zeenbot's new Panel - The center of everything",
@@ -90,7 +151,6 @@ module.exports = {
                                 }
                             },
                             feedsTitle: "Feeds",
-                            graphTitle: "Graphs",
                         },
                         blacklisted: {
                             title: "Blacklisted",
@@ -185,139 +245,6 @@ module.exports = {
                             }
                         }
                     },
-                    deDE: {
-                        name: 'Deutsch',
-                        index: {
-                            feeds: ["Current Users", "CPU", "System Platform", "Server Count"],
-                            card: {
-                                category: "zeenbot",
-                                title: "zeenbot's neues Panel - The Zentrum von allem",
-                                description: "Herzlich willkommen im zeenbot-Panel, wo Sie die Kernfunktionen des Bots steuern können.",
-                                footer: "Lade den Bot ein",
-                                link: {
-                                    enabled: true,
-                                    url: "https://discord.com/api/oauth2/authorize?client_id=1047099666182967317&permissions=8&scope=bot%20applications.commands"
-                                }
-                            },
-                            feedsTitle: "Feeds",
-                            graphTitle: "Graphen",
-                        },
-                        blacklisted: {
-                            title: "Blacklisted",
-                            subtitle: "Zugriff verweigert",
-                            description: "Leider sieht es so aus, als wärst du für das Dashboard gesperrt.",
-                            button: {
-                                enabled: false,
-                                text: "Return",
-                                link: "https://google.com"
-                            }
-                        },
-                        manage: {
-                            settings: {
-                                memberCount: "Mitglieder",
-                                info: {
-                                    info: "Info",
-                                    server: "Server Informationen"
-                                }
-                            }
-                        },
-                        privacyPolicy: {
-                            title: "Datenschutzbestimmungen",
-                            description: "DDatenschutzbestimmungen und ABGs",
-                            pp: "Datenschutzbestimmungen",
-                        },
-                        partials: {
-                            sidebar: {
-                                dash: "Dashboard",
-                                manage: "Server verwalten",
-                                commands: "Commands",
-                                pp: "Datenschutzbestimmungen",
-                                admin: "Admin",
-                                account: "Account Seite",
-                                login: "Anmelden",
-                                logout: "Abmelden"
-                            },
-                            navbar: {
-                                home: "Home",
-                                pages: {
-                                    manage: "Server verwalten",
-                                    settings: "Server verwalten",
-                                    commands: "Commands",
-                                    pp: "Datenschutzbestimmungen",
-                                    admin: "Admin Panel",
-                                    error: "Error",
-                                    credits: "Credits",
-                                    debug: "Debug",
-                                    leaderboard: "Leaderboard",
-                                    profile: "Profil",
-                                    maintenance: "Wartungsarbeiten",
-                                }
-                            },
-                            title: {
-                                pages: {
-                                    manage: "Server verwalten",
-                                    settings: "Server verwalten",
-                                    commands: "Commands",
-                                    pp: "Datenschutzbestimmungen",
-                                    admin: "Admin Panel",
-                                    error: "Error",
-                                    credits: "Credits",
-                                    debug: "Debug",
-                                    leaderboard: "Leaderboard",
-                                    profile: "Profil",
-                                    maintenance: "Wartungsarbeiten",
-                                }
-                            },
-                            preloader: {
-                                image: "https://cdn.discordapp.com/attachments/1041329286969294858/1060965096215560192/output-onlinegiftools.gif",
-                                text: "Page is loading...",
-                                spinner: false
-                            },
-                            premium: {
-                                title: "Du willst mehr von zeenbot?",
-                                description: "Sieht dir unsere Premium Features an!",
-                                buttonText: "Premium erhalten",
-                                button: {
-                                    url: "https://google.com"
-                                }
-                            },
-                            settings: {
-                                title: "Webseiten Konfiguration",
-                                description: "Verfügbare Einstellunge",
-                                theme: {
-                                    title: "Seiten Thema",
-                                    description: "Passe die Seite an!",
-                                },
-                                language: {
-                                    title: "Sprache",
-                                    description: "Wähle deine Sprache aus!",
-                                }
-                            }
-                        }
-                    }
-                },
-                customThemeOptions: {
-                    index: async ({ req, res, config }) => {
-                        return {
-                            values: [],
-                            graph: {},
-                            cards: [],
-                        }
-                    },
-                },
-                websiteName: "zeenbot",
-                colorScheme: "blue",
-                supporteMail: "support@zeenbot.xyz",
-                icons: {
-                    favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
-                    noGuildIcon: "https://pnggrid.com/wp-content/uploads/2021/05/Discord-Logo-Circle-1024x1024.png",
-                    sidebar: {
-                        darkUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png',
-                        lightUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
-                        hideName: true,
-                        borderRadius: false,
-                        alignCenter: true
-                    },
                 },
                 index: {
                     card: {
@@ -336,7 +263,24 @@ module.exports = {
                         lineGraph: false,
                         title: 'Memory Usage',
                         tag: 'Memory (MB)',
-                        max: 100
+                        max: 100,
+                    },
+                },
+                invite: {
+                    clientId: `${config.discord.client.id}`,
+                    scopes: ["bot", "applications.commands"],
+                    permissions: '8',
+                    redirectUri: `${config.dbd.domain}${config.dbd.inviteCallback}`,
+                },
+                icons: {
+                    favicon: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
+                    noGuildIcon: "https://pnggrid.com/wp-content/uploads/2021/05/Discord-Logo-Circle-1024x1024.png",
+                    sidebar: {
+                        darkUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553392627723/z-white.png',
+                        lightUrl: 'https://cdn.discordapp.com/attachments/1041329286969294858/1058348553715580938/z-black.png',
+                        hideName: true,
+                        borderRadius: false,
+                        alignCenter: true
                     },
                 },
                 blacklisted: {
@@ -390,44 +334,44 @@ module.exports = {
                     }
                 },
 
-                    commands: [
-                        {
-                            category: "Information",
-                            subTitle: "Information Commands",
-                            aliasesDisabled: false,
-                            list: Information
-                        },
-                        {
-                            category: "Tickets",
-                            subTitle: "Ticket Commands",
-                            aliasesDisabled: false,
-                            list: Tickets
-                        },
-                        {
-                            category: "Giveaways",
-                            subTitle: "Giveaway Commands",
-                            aliasesDisabled: false,
-                            list: Giveaway
-                        },
-                        {
-                            category: "Economy",
-                            subTitle: "Economy Commands",
-                            aliasesDisabled: false,
-                            list: Economy
-                        },
-                        {
-                            category: "Community",
-                            subTitle: "Community Commands",
-                            aliasesDisabled: false,
-                            list: Community
-                        },
-                        {
-                            category: "Moderation",
-                            subTitle: "Moderation Commands",
-                            aliasesDisabled: false,
-                            list: Moderation
-                        },
-                    ],
+                commands: [
+                    {
+                        category: "Information",
+                        subTitle: "Information Commands",
+                        aliasesDisabled: false,
+                        list: Information
+                    },
+                    {
+                        category: "Tickets",
+                        subTitle: "Ticket Commands",
+                        aliasesDisabled: false,
+                        list: Tickets
+                    },
+                    {
+                        category: "Giveaways",
+                        subTitle: "Giveaway Commands",
+                        aliasesDisabled: false,
+                        list: Giveaway
+                    },
+                    {
+                        category: "Economy",
+                        subTitle: "Economy Commands",
+                        aliasesDisabled: false,
+                        list: Economy
+                    },
+                    {
+                        category: "Community",
+                        subTitle: "Community Commands",
+                        aliasesDisabled: false,
+                        list: Community
+                    },
+                    {
+                        category: "Moderation",
+                        subTitle: "Moderation Commands",
+                        aliasesDisabled: false,
+                        list: Moderation
+                    },
+                ],
 
             }),
             settings: [
@@ -440,52 +384,26 @@ module.exports = {
                     categoryImageURL: 'https://cdn.discordapp.com/attachments/1062107362879619123/1062107518983221328/zeenbot.png',
                     categoryOptionsList: [
                         {
-                            optionId: "test",
-                            optionName: "taginputtest",
-                            optionDescription: "",
-                            optionType:  SoftUI.formTypes.tagInput(false),
-                            getActualSet: async ({ guild }) => {
-                                return testSettings[guild.id] || null
-                            },
-                            setNew: async ({ guild, newData }) => {
-                                testSettings[guild.id] = newData;
-                                return;
-                            }
-                        },
-                        {
                             optionId: "mods",
                             optionName: "Moderators",
                             optionDescription: "Set the role for the mods/Admins",
                             optionType:  DBD.formTypes.rolesSelect(false),
-                            getActualSet: async ({ guild }) => {
-                                let data = await PermissionsDB.findOne({ Guild: guild.id }).catch(err => { })
-                                if (data) return data.ID
-                                else return null
+                            getActualSet: async ({guild}) => {
+                                const mods = await PermissionsDB.findOne({ Guild: guild.id }).catch(err => {});
+                                if (mods) return mods.ID;
+                                return null;
                             },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await PermissionsDB.findOne({ Guild: guild.id }).catch(err => { })
-
-                                if (!newData) newData = null
-
-                                if (!data) {
-
-                                    data = new PermissionsDB({
+                            setNew: async ({guild, data}) => {
+                                const mods = await PermissionsDB.findOne({ Guild: guild.id }).catch(err => {});
+                                if (!mods) {
+                                    await new PermissionsDB({
                                         Guild: guild.id,
-                                        ID: newData,
-                                    })
-
-                                    await data.save()
-
+                                        ID: data
+                                    }).save().catch(err => {});
                                 } else {
-
-                                    data.ID = newData
-                                    await data.save()
-
+                                    mods.ID = data;
+                                    await mods.save().catch(err => {});
                                 }
-
-                                return
-
                             }
                         },
                         {
@@ -493,41 +411,22 @@ module.exports = {
                             optionName: "Report Channel",
                             optionDescription: "Set or disable the report channel",
                             optionType:  DBD.formTypes.channelsSelect(false, channelTypes = [ChannelType.GuildText]),
-                            getActualSet: async ({ guild }) => {
-                                let data = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
-                                if (data) return data.Channel
-                                else return null
+                            getActualSet: async ({guild}) => {
+                                const reportch = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (reportch) return reportch.Channel;
+                                return null;
                             },
-                            setNew: async ({ guild, newData }) => {
-
-                                let data = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
-
-                                if (!newData) {
-                                    newData = null
-                                    let data = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
-                                    if (!data) return
-
-                                    await reportChannelDB.deleteOne({ Guild: guild.id }).catch(err => { })
-                                }
-
-                                if (!data) {
-
-                                    data = new reportChannelDB({
+                            setNew: async ({guild, data}) => {
+                                const reportch = await reportChannelDB.findOne({ Guild: guild.id }).catch(err => { })
+                                if (!reportch) {
+                                    await new reportChannelDB({
                                         Guild: guild.id,
-                                        Channel: newData,
-                                    })
-
-                                    await data.save()
-
+                                        Channel: data
+                                    }).save().catch(err => {});
                                 } else {
-
-                                    data.Channel = newData
-                                    await data.save()
-
+                                    reportch.Channel = data;
+                                    await reportch.save().catch(err => {});
                                 }
-
-                                return
-
                             }
                         },
                     ]
@@ -897,11 +796,13 @@ module.exports = {
                                         WordThreshold: 3,
                                         LinkThreshold: 3,
                                         CapsThreshold: 3,
+                                        WarnThreshold: 3,
                                         MentionThreshold: 3,
                                         InviteThreshold: 3,
                                         WordAction: "Warn",
                                         LinkAction: "Warn",
                                         CapsAction: "Warn",
+                                        WarnAction: "Mute",
                                         MentionAction: "Warn",
                                         InviteAction: "Warn",
                                         DefaultMuteTime:  5,
@@ -990,6 +891,35 @@ module.exports = {
 
                                 return;
                             },
+                        },
+                        {
+                            optionId: "amthresholdwarnings",
+                            optionName: "Received warnings.",
+                            optionDescription: "Set after how many warnings the Auto Mod should take action.",
+                            optionType: SoftUI.formTypes.numberPicker(false),
+                            getActualSet: async ({ guild }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodwarnings) return null
+                                return automodwarnings.WarnThreshold
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodwarnings = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodwarnings) {
+                                    automodwarnings = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        WarnThreshold: newData
+                                    })
+                                    await automodwarnings.save()
+                                } else {
+                                    automodwarnings.WarnThreshold = newData
+                                    await automodwarnings.save()
+                                }
+
+                                return;
+                            }
                         },
                         {
                             optionId: "amthresholdmentions",
@@ -1154,6 +1084,35 @@ module.exports = {
                                     await automodactions.save()
                                 } else {
                                     automodactions.CapsAction = newData
+                                    await automodactions.save()
+                                }
+
+                                return;
+                            }
+                        },
+                        {
+                            optionId: "amactionwarns",
+                            optionName: "Received warnings.",
+                            optionDescription: "Set the default action for received warnings.",
+                            optionType: DBD.formTypes.select({ 'Warn': 'Warn', 'Mute': 'Mute', 'Kick': 'Kick', 'Ban': 'Ban' }),
+                            getActualSet: async ({ guild }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if (!automodactions) return null
+                                return automodactions.WarnAction
+                            },
+                            setNew: async ({ guild, newData }) => {
+                                let automodactions = await automodWarningsDB.findOne({ GuildID: guild.id }).catch(err => { })
+
+                                if (!newData) newData = null
+
+                                if (!automodactions) {
+                                    automodactions = new automodWarningsDB({
+                                        GuildID: guild.id,
+                                        WarnAction: newData
+                                    })
+                                    await automodactions.save()
+                                } else {
+                                    automodactions.WarnAction = newData
                                     await automodactions.save()
                                 }
 
@@ -2837,6 +2796,15 @@ module.exports = {
                     toggleable: true,
                     getActualSet: async ({ guild }) => {
                         let feature = await featuresDB.findOne({ GuildID: guild.id }).catch(err => { })
+                        let voiceHubs = await voiceDB.findOne({ GuildID: guild.id }).catch(err => { })
+                        if (!voiceHubs) {
+                            voiceHubs = new voiceDB({
+                                GuildID: guild.id,
+                                VoiceHubs: [],
+                                VoiceChannels: []
+                            })
+                            await voiceHubs.save()
+                        }
                         if (feature) return feature.VoiceHubs
                         else return false
                     },
@@ -2862,6 +2830,9 @@ module.exports = {
                             optionType: DBD.formTypes.channelsMultiSelect(false, false, channelTypes = [ChannelType.GuildVoice]),
                             getActualSet: async ({ guild }) => {
                                 let channel = await channelsDB.findOne({ GuildID: guild.id }).catch(err => { })
+                                if(!channel) {
+
+                                }
                                 if (channel) return channel.VoiceHubs
                                 else return []
                             },
