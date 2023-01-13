@@ -1,5 +1,6 @@
-const { Client, GuildMember, EmbedBuilder } = require("discord.js")
+const { Client, GuildMember, EmbedBuilder, AttachmentBuilder} = require("discord.js")
 const DB = require("../../Structures/Schemas/Welcome")
+const canvacord = require("canvacord")
 
 module.exports = {
     name: "guildMemberAdd",
@@ -13,6 +14,19 @@ module.exports = {
         const { user, guild } = member
 
         const Data = await DB.findOne({ Guild: guild.id }).catch(err => { })
+
+        const welcomeCard = new canvacord.Welcomer()
+            .setUsername(user.username)
+            .setDiscriminator(user.discriminator)
+            .setMemberCount(guild.memberCount)
+            .setGuildName(guild.name)
+            .setAvatar(user.displayAvatarURL({ dynamic: false, format: "png" }))
+            .setBackground("https://i.imgur.com/okIR1iY.png")
+
+        const Card = await welcomeCard.build().catch(err => console.log(err))
+
+        const attachment = new AttachmentBuilder(Card, { name: "welcome.png" })
+
 
         if (!Data) return
 
@@ -46,11 +60,12 @@ module.exports = {
                     { name: "Member Count", value: `${guild.memberCount}`, inline: true },
                 )
                 .setDescription(Data.Msg)
-                .setThumbnail(user.displayAvatarURL())
-                .setFooter({ text: "Welcome by zeenbot" })
+                .setThumbnail(guild.iconURL())
+                .setFooter({ text: `ID: ${user.id}` })
                 .setTimestamp()
+                .setImage("attachment://welcome.png")
 
-            Channel.send({ content: `${Message}`, embeds: [Embed] })
+            Channel.send({ content: `${Message}`, embeds: [Embed], files: [attachment] })
 
         }
 

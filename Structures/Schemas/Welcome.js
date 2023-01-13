@@ -8,6 +8,9 @@ module.exports = model("welome", new Schema({
     DM: Boolean,
     DMMessage: Object,
     Content: Boolean,
-    Embed: Boolean
+    Embed: Boolean,
+    ImageURI: String,
+    Image: Boolean,
+
 
 }))
