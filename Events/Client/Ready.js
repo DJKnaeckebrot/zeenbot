@@ -2,6 +2,7 @@ const { Client } = require("discord.js")
 const ms = require("ms")
 const mongoose = require("mongoose")
 const DSU = require("dbdsoftuishardstats");
+const config = require("../../config.json")
 const mongodbURL = process.env.MONGODBURL
 
 module.exports = {
@@ -11,6 +12,8 @@ module.exports = {
     * @param {Client} client
     */
     async execute(client) {
+
+        mongoose.set('strictQuery', true);
 
         const { user, ws } = client
 
