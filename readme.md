@@ -10,7 +10,7 @@ I might nor not will update the bot at a later time. The bot has some performanc
 
 # Config
 
-The bot uses Assistants Centers Discord Dashboard and Soft UI in a modified version. To use it copy the .env.example and fill in your details
+The bot uses Assistants Centers Discord Dashboard and Soft UI in a modified version. To use it copy the .env.example and fill in your details. Also modify the /Events/Client/config.json according to [Soft UI settings](https://dbd-docs.assistantscenter.com/soft-ui/setup/#creating-config-json)
 
 # License
 

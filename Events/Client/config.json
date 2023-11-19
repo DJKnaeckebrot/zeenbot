@@ -1,0 +1,16 @@
+{
+    "discord": {
+      "token": "",
+      "client": {
+        "id": "1",
+        "secret": ""
+      }
+    },
+    "dbd": {
+      "port": ,
+      "domain": "",
+      "redirectUri": "",
+      "license": "",
+      "ownerIDs": [""]
+    }
+  }
