@@ -37,7 +37,12 @@ module.exports = {
             embeds: [
                 Embed
                     .setTitle(`Member Joined`)
-                    .setDescription(`<@${user.id}> ${guild.memberCount}th to join \n <t:${parseInt(user.createdTimestamp / 1000)}:R>`)
+                    .setColor('#02ff02')
+                    .addFields({
+                        name: "⏲️ Account created:",
+                        value: `<t:${parseInt(user.createdTimestamp / 1000)}:R>`,
+                    })
+                    .setDescription(`<@${user.id}> joined the server. \n ${guild.memberCount}th to join`)
                     .setFooter({ text: `${user.id}` })
                     .setTimestamp()
             ]

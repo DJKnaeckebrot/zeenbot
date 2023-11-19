@@ -66,8 +66,16 @@ module.exports = {
             return Channel.send({
                 embeds: [
                     Embed
-                        .setTitle(`${process.env.Settings} | Nickname Update`)
-                        .setDescription(`**${newMember.user.tag}**'s nickname has been changed from: \`${oldMember.nickname}\` to: \`${newMember.nickname}\``)
+                        .setAuthor({
+                            name: `${user.tag}`,
+                            icon_url: `${user.displayAvatarURL()}`
+                        })
+                        .setColor("#ffb700")
+                        .setDescription(`<@${newMember.user.id}>'s nickname has been changed`)
+                        .addFields({
+                            name: "Old Nickname",
+                            value: oldMember.nickname || "None"
+                        })
                 ]
             })
 

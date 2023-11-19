@@ -29,9 +29,16 @@ module.exports = {
         return Channel.send({
             embeds: [
                 new EmbedBuilder()
-                    .setColor(client.color)
-                    .setTitle(`${process.env.Settings} | User Banned`)
+                    .setColor("#ff0000")
+                    .setTitle(`User Banned`)
                     .setDescription(`**${username}#${discriminator}** (${id}) has been banned from the server`)
+                    .addFields({
+                        name: "Responsible Moderator",
+                        value: "Unknown"
+                    }, {
+                        name: "Reason",
+                        value: guildBan.reason || "No reason provided"
+                    })
                     .setThumbnail(guild.iconURL())
                     .setFooter({ text: "Logged by zeenbot" })
                     .setTimestamp()
