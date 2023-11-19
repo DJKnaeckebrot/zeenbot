@@ -14,4 +14,4 @@ The bot uses Assistants Centers Discord Dashboard and Soft UI in a modified vers
 
 # License
 
-This project is open source so feel free to take and modify it :D
+This project is Licensed under [GPL-3.0](license.md)
